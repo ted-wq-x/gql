@@ -14,27 +14,47 @@ foreach(i ${GQL_HEADER_FILES})
   source_group(${_group} FILES ${_name})
 endforeach()
 
-add_library(gql_parser STATIC
+set(SOURCES
   ${GQL_HEADERS}
-  "ast_builder.cpp"
-  "generated/GQLLexer.cpp"
-  "generated/GQLParser.cpp"
-  "parser.cpp"
-  "unescape_string.cpp"
+  ast_builder.cpp
+  generated/GQLLexer.cpp
+  generated/GQLParser.cpp
+  parser.cpp
+  unescape_string.cpp
+)
+
+add_library(gql_parser STATIC
+  ${SOURCES}
+)
+
+add_library(gql_parser_component INTERFACE)
+
+target_sources(gql_parser_component
+  INTERFACE
+  ${SOURCES}
 )
 
 target_include_directories(gql_parser
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../include
-  PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(gql_parser antlr4_static)
+target_link_libraries(gql_parser
+  antlr4_static
+  gql_ast
+  gql_common
+)
+
+target_link_libraries(gql_parser_component
+  INTERFACE
+  antlr4_component
+  gql_ast
+)
 
 add_executable(gql_parser_test
   parse_file_test.cpp
   parser_test.cpp
   parser_unittest.cpp
+  traverse_expression_unittest.cpp
 )
 
 if(0)

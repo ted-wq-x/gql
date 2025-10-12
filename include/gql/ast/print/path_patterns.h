@@ -56,7 +56,7 @@ template <>
 struct Printer<ElementPatternFiller> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const ElementPatternFiller& v) {
-    os << NoBreak() << v.varDecl;
+    os << NoBreak() << v.var;
     if (v.labelExpr)
       os << ":" << NoBreak() << v.labelExpr;
     os << v.predicate << NoBreak();
@@ -156,7 +156,7 @@ template <>
 struct Printer<SimplifiedNodePattern> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const SimplifiedNodePattern& v) {
-    os << v.varDecl << v.labels;
+    os << v.var << v.labels;
     if (!v.props.empty())
       os << "{" << v.props << "}";
   }
@@ -166,7 +166,7 @@ template <>
 struct Printer<SimplifiedEdgePattern> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const SimplifiedEdgePattern& v) {
-    os << v.varDecl << v.labels;
+    os << v.var << v.labels;
     if (!v.props.empty())
       os << "{" << v.props << "}";
     os << v.quantifier;
@@ -296,8 +296,8 @@ struct Printer<ParenthesizedPathPatternExpression> {
   static void Print(OutputStream& os,
                     const ParenthesizedPathPatternExpression& v) {
     os << "(";
-    if (v.varDecl)
-      os << v.varDecl << "=";
+    if (v.var)
+      os << v.var << "=";
     if (v.pathMode != PathMode::WALK)
       os << v.pathMode << "PATH";
     os << v.pattern;

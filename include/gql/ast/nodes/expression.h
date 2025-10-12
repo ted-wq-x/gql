@@ -33,8 +33,8 @@ enum class CompOp {
   NotEquals,
   LessThan,
   GreaterThan,
-  LessOrEqual,
-  GreaterOrEqual
+  LessThanOrEquals,
+  GreaterThanOrEquals
 };
 
 // normalForm : NFC | NFD | NFKC | NFKD ;
@@ -245,7 +245,7 @@ GQL_AST_STRUCT(LetValueExpression, definitions, expression)
 //    | PERCENT
 //    | LEFT_PAREN labelExpression RIGHT_PAREN
 struct LabelExpression;
-using LabelExpressionPtr = copyable_ptr<LabelExpression>;
+using LabelExpressionPtr = value_ptr<LabelExpression>;
 struct LabelExpression : NodeBase<LabelExpression> {
   struct Negation {
     LabelExpressionPtr expr;
@@ -829,7 +829,9 @@ GQL_AST_STRUCT(GraphExpression, option)
 //     matchStatementBlock RIGHT_PAREN | nestedQuerySpecification)
 //     ;
 struct ExistsPredicate : NodeBase<ExistsPredicate> {
-  std::variant<GraphPatternPtr, MatchStatementBlockPtr, ProcedureBodyPtr>
+  std::variant<GraphPatternPtr,         // May be rewritten
+               MatchStatementBlockPtr,  // May be rewritten
+               ProcedureBodyPtr>
       option;
 };
 GQL_AST_STRUCT(ExistsPredicate, option)
@@ -1092,7 +1094,7 @@ struct ValueExpression : NodeBase<ValueExpression> {
                SessionUserValue,
                PathValueConstructor,
                PropertyReference,
-               ProcedureBodyPtr,
+               ProcedureBodyPtr,  // valueQueryExpression
                CaseExpression,
                CastSpecification,
                ElementIdFunction,

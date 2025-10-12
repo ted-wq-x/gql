@@ -19,19 +19,21 @@
 namespace gql::ast {
 
 struct SimplifiedTertiary;
-using SimplifiedTertiaryPtr = copyable_ptr<SimplifiedTertiary>;
+using SimplifiedTertiaryPtr = value_ptr<SimplifiedTertiary>;
 
 struct ParenthesizedPathPatternExpression;
 using ParenthesizedPathPatternExpressionPtr =
-    copyable_ptr<ParenthesizedPathPatternExpression>;
+    value_ptr<ParenthesizedPathPatternExpression>;
+
+// elementVariable
+//    : bindingVariable
 
 // elementVariableDeclaration
 //    : TEMP? elementVariable
-// NOTE249 — An <element variable declaration> containing TEMP is a
+// NOTE 249 — An <element variable declaration> containing TEMP is a
 // specification device and is not syntax available to the user.
-struct ElementVariableDeclaration : NodeBase<ElementVariableDeclaration> {
-  ElementVariable name;
-};
+struct ElementVariableDeclaration : BindingVariableBase,
+                                    NodeBase<ElementVariableDeclaration> {};
 GQL_AST_STRUCT(ElementVariableDeclaration, name)
 
 // isLabelExpression
@@ -73,11 +75,11 @@ using ElementPatternPredicate =
 // elementPatternFiller
 //    : elementVariableDeclaration? isLabelExpression? elementPatternPredicate?
 struct ElementPatternFiller : NodeBase<ElementPatternFiller> {
-  std::optional<ElementVariableDeclaration> varDecl;
+  std::optional<ElementVariableDeclaration> var;
   std::optional<IsLabelExpression> labelExpr;
   std::optional<ElementPatternPredicate> predicate;
 };
-GQL_AST_STRUCT(ElementPatternFiller, varDecl, labelExpr, predicate)
+GQL_AST_STRUCT(ElementPatternFiller, var, labelExpr, predicate)
 
 // fullEdgePattern
 //    : fullEdgePointingLeft
@@ -199,22 +201,22 @@ using GraphPatternQuantifier = GeneralQuantifier;
 //    : elementVariableDeclaration? labelSetSpecification?
 //    elementPropertySpecification?
 struct SimplifiedNodePattern : NodeBase<SimplifiedNodePattern> {
-  std::optional<ElementVariableDeclaration> varDecl;
+  std::optional<ElementVariableDeclaration> var;
   LabelSetSpecification labels;
   PropertyKeyValuePairList props;
 };
-GQL_AST_STRUCT(SimplifiedNodePattern, varDecl, labels, props)
+GQL_AST_STRUCT(SimplifiedNodePattern, var, labels, props)
 
 // simplifiedEdgePattern
 //    : elementVariableDeclaration? labelSetSpecification?
 //    elementPropertySpecification? graphPatternQuantifier?
 struct SimplifiedEdgePattern : NodeBase<SimplifiedEdgePattern> {
-  std::optional<ElementVariableDeclaration> varDecl;
+  std::optional<ElementVariableDeclaration> var;
   LabelSetSpecification labels;
   PropertyKeyValuePairList props;
   std::optional<GraphPatternQuantifier> quantifier;
 };
-GQL_AST_STRUCT(SimplifiedEdgePattern, varDecl, labels, props, quantifier)
+GQL_AST_STRUCT(SimplifiedEdgePattern, var, labels, props, quantifier)
 
 // simplifiedPathPatternPrimary
 //    : simplifiedNodePattern
@@ -402,9 +404,12 @@ GQL_AST_STRUCT(SimplifiedPathPatternExpression, direction, contents)
 //    : elementPattern
 //    | parenthesizedPathPatternExpression
 //    | simplifiedPathPatternExpression
-using PathPrimary = std::variant<ElementPattern,
-                                 ParenthesizedPathPatternExpressionPtr,
-                                 SimplifiedPathPatternExpression>;
+using PathPrimary = std::variant<
+    ElementPattern,
+    ParenthesizedPathPatternExpressionPtr,
+    SimplifiedPathPatternExpression  // Eliminated by
+                                     // rewrite::RewriteSimplifiedPathPattern
+    >;
 
 // pathFactor
 //    : pathPrimary
@@ -441,13 +446,13 @@ GQL_AST_STRUCT(PathPatternExpression, op, terms)
 //    pathPatternExpression parenthesizedPathPatternWhereClause? RIGHT_PAREN
 struct ParenthesizedPathPatternExpression
     : NodeBase<ParenthesizedPathPatternExpression> {
-  std::optional<SubpathVariableDeclaration> varDecl;
+  std::optional<SubpathVariableDeclaration> var;
   PathMode pathMode = PathMode::WALK;  // WALK is implicit value.
   PathPatternExpression pattern;
   std::optional<ParenthesizedPathPatternWhereClause> where;
 };
 GQL_AST_STRUCT(ParenthesizedPathPatternExpression,
-               varDecl,
+               var,
                pathMode,
                pattern,
                where)

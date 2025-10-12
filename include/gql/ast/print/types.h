@@ -35,41 +35,22 @@ GQL_AST_ENUM_PRINTER(SimplePredefinedType,
                      (AnyProperty, "ANY PROPERTY VALUE"),
                      (Path, "PATH"))
 
-GQL_AST_ENUM_PRINTER_LITERAL(StringType::Kind,
-                             STRING,
-                             CHAR,
-                             VARCHAR,
-                             BYTES,
-                             BINARY,
-                             VARBINARY)
-
 template <>
 struct Printer<StringType> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const StringType& v) {
-    switch (v.kind) {
-      case StringType::Kind::STRING:
-      case StringType::Kind::BYTES:
-        os << v.kind;
-        if (v.maxLength) {
-          os << "(";
-          if (v.minLength > 0)
-            os << v.minLength << ",";
-          os << *v.maxLength << ")";
-        }
-        break;
-      case StringType::Kind::CHAR:
-      case StringType::Kind::BINARY:
-        os << v.kind;
-        if (v.maxLength)
-          os << "(" << *v.maxLength << ")";
-        break;
-      case StringType::Kind::VARBINARY:
-      case StringType::Kind::VARCHAR:
-        os << v.kind;
-        if (v.maxLength)
-          os << "(" << *v.maxLength << ")";
-        break;
+    if (v.maxLength && *v.maxLength == v.minLength) {
+      // Fixed length
+      os << (v.kind == StringType::Kind::CHAR ? "CHAR" : "BINARY") << "("
+         << v.minLength << ")";
+    } else if (!v.maxLength) {
+      os << (v.kind == StringType::Kind::CHAR ? "CHAR" : "BINARY");
+    } else {
+      os << (v.kind == StringType::Kind::CHAR ? "STRING" : "BYTES") << "(";
+      if (v.minLength > 0) {
+        os << v.minLength << ",";
+      }
+      os << v.maxLength << ")";
     }
   }
 };
@@ -82,6 +63,7 @@ GQL_AST_ENUM_PRINTER(SimpleNumericType,
                      (Int128, "INT128"),
                      (Int256, "INT256"),
                      (SmallInt, "SMALLINT"),
+                     (Int, "INT"),
                      (BigInt, "BIGINT"),
                      (UInt8, "UINT8"),
                      (UInt16, "UINT16"),
@@ -90,6 +72,7 @@ GQL_AST_ENUM_PRINTER(SimpleNumericType,
                      (UInt128, "UINT128"),
                      (UInt256, "UINT256"),
                      (USmallInt, "USMALLINT"),
+                     (UInt, "UINT"),
                      (UBigInt, "UBIGINT"),
                      (Float16, "FLOAT16"),
                      (Float32, "FLOAT32"),
@@ -99,15 +82,11 @@ GQL_AST_ENUM_PRINTER(SimpleNumericType,
                      (Real, "REAL"),
                      (Double, "DOUBLE"))
 
-GQL_AST_ENUM_PRINTER(PrecisionNumericType::Type, (Int, "INT"), (UInt, "UINT"))
-
 template <>
-struct Printer<PrecisionNumericType> {
+struct Printer<BinaryExactUserNumericType> {
   template <typename OutputStream>
-  static void Print(OutputStream& os, const PrecisionNumericType& v) {
-    os << v.type;
-    if (v.precision)
-      os << "(" << *v.precision << ")";
+  static void Print(OutputStream& os, const BinaryExactUserNumericType& v) {
+    os << (v.isSigned ? "INT" : "UINT") << "(" << v.precision << ")";
   }
 };
 
@@ -223,6 +202,8 @@ template <>
 struct Printer<ValueType::List> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const ValueType::List& v) {
+    if (v.isGroup)
+      os << "GROUP";
     os << "LIST";
     if (v.valueType)
       os << "<" << NoBreak() << *v.valueType << NoBreak() << ">";

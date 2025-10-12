@@ -1,13 +1,29 @@
-add_library(gql_rewrite STATIC
+set(SOURCES
+    element_patterns.cpp
+    exists_predicate.cpp
+    helpers.h
+    path_pattern_prefix.cpp
     simplified_path_pattern.cpp
+)
+
+add_library(gql_rewrite STATIC
+    ${SOURCES}
+)
+
+add_library(gql_rewrite_component INTERFACE)
+
+target_sources(gql_rewrite_component
+    INTERFACE
+    ${SOURCES}
 )
 
 target_link_libraries(gql_rewrite
     gql_ast
+    gql_common
 )
 
 add_executable(gql_rewrite_test
-    simplified_path_pattern_unittest.cpp
+    rewrite_unittest.cpp
 )
 
 target_link_libraries(gql_rewrite_test

@@ -20,6 +20,6 @@ namespace gql::ast {
 
 // Check that input positions are set correctly for all nodes in the program.
 // Uses GTest to report failures.
-void CheckInputPositions(gql::ast::GQLProgram& program);
+void CheckInputPositions(const gql::ast::GQLProgram& program);
 
 }  // namespace gql::ast

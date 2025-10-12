@@ -20,26 +20,26 @@
 #include <variant>
 #include <vector>
 
-#include "gql/ast/detail/copyable_ptr.h"
 #include "gql/ast/detail/reflection.h"
+#include "gql/ast/detail/value_ptr.h"
 #include "gql/ast/nodes/base.h"
 
 namespace gql::ast {
 
 struct ValueExpression;
-using ValueExpressionPtr = copyable_ptr<ValueExpression>;
+using ValueExpressionPtr = value_ptr<ValueExpression>;
 
 struct ValueType;
-using ValueTypePtr = copyable_ptr<ValueType>;
+using ValueTypePtr = value_ptr<ValueType>;
 
 struct ProcedureBody;
-using ProcedureBodyPtr = copyable_ptr<ProcedureBody>;
+using ProcedureBodyPtr = value_ptr<ProcedureBody>;
 
 struct GraphPattern;
-using GraphPatternPtr = copyable_ptr<GraphPattern>;
+using GraphPatternPtr = value_ptr<GraphPattern>;
 
 struct MatchStatementBlock;
-using MatchStatementBlockPtr = copyable_ptr<MatchStatementBlock>;
+using MatchStatementBlockPtr = value_ptr<MatchStatementBlock>;
 
 // truthValue
 //    : BOOLEAN_LITERAL
@@ -124,11 +124,6 @@ GQL_AST_STRUCT(BindingVariable, name)
 struct BindingVariableReference : BindingVariableBase,
                                   NodeBase<BindingVariableReference> {};
 GQL_AST_STRUCT(BindingVariableReference, name)
-
-// elementVariable
-//    : bindingVariable
-struct ElementVariable : BindingVariableBase, NodeBase<ElementVariable> {};
-GQL_AST_STRUCT(ElementVariable, name)
 
 // pathVariable
 //    : bindingVariable
@@ -294,15 +289,15 @@ GQL_AST_STRUCT(GeneralParameterReference, name)
 // SUBSTITUTED_PARAMETER_REFERENCE
 //    : DOUBLE_DOLLAR_SIGN PARAMETER_NAME
 //    ;
-struct SubstitutedParameterReference : NodeBase<SubstitutedParameterReference> {
-  std::string name;
-};
-GQL_AST_STRUCT(SubstitutedParameterReference, name)
 
 //  referenceParameterSpecification
 //    : SUBSTITUTED_PARAMETER_REFERENCE
 //    ;
-using ReferenceParameterSpecification = SubstitutedParameterReference;
+struct ReferenceParameterSpecification
+    : NodeBase<ReferenceParameterSpecification> {
+  std::string name;
+};
+GQL_AST_STRUCT(ReferenceParameterSpecification, name)
 
 // delimitedGraphName
 //    : DOUBLE_QUOTED_CHARACTER_SEQUENCE
@@ -329,6 +324,8 @@ GQL_AST_STRUCT(BindingTableName, name)
 //     | dynamicParameterSpecification
 //     ;
 using NonNegativeIntegerSpecification =
-    std::variant<UnsignedInteger, GeneralParameterReference>;
+    std::variant<UnsignedInteger,
+                 GeneralParameterReference  // Feature GS16
+                 >;
 
 }  // namespace gql::ast

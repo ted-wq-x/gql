@@ -163,9 +163,10 @@ struct Printer<GeneralParameterReference> {
 };
 
 template <>
-struct Printer<SubstitutedParameterReference> {
+struct Printer<ReferenceParameterSpecification> {
   template <typename OutputStream>
-  static void Print(OutputStream& os, const SubstitutedParameterReference& v) {
+  static void Print(OutputStream& os,
+                    const ReferenceParameterSpecification& v) {
     os << "$$" << NoBreak();
     RegularIdentifierOrQuotedStringPrinter::Print(os, v);
   }

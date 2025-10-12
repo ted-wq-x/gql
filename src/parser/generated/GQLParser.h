@@ -5,8 +5,6 @@
 
 #include "antlr4-runtime.h"
 
-namespace GQL_NS {
-
 class GQLParser : public antlr4::Parser {
  public:
   enum {
@@ -497,10 +495,10 @@ class GQLParser : public antlr4::Parser {
     RuleCallDataModifyingProcedureStatement = 90,
     RuleCompositeQueryStatement = 91,
     RuleCompositeQueryExpression = 92,
-    RuleQueryConjunction = 93,
-    RuleSetOperator = 94,
-    RuleCompositeQueryPrimary = 95,
-    RuleLinearQueryStatement = 96,
+    RuleCompositeQueryExpressionFocused = 93,
+    RuleCompositeQueryExpressionAmbient = 94,
+    RuleQueryConjunction = 95,
+    RuleSetOperator = 96,
     RuleFocusedLinearQueryStatement = 97,
     RuleFocusedLinearQueryStatementPart = 98,
     RuleFocusedLinearQueryAndPrimitiveResultStatementPart = 99,
@@ -1090,10 +1088,10 @@ class GQLParser : public antlr4::Parser {
   class CallDataModifyingProcedureStatementContext;
   class CompositeQueryStatementContext;
   class CompositeQueryExpressionContext;
+  class CompositeQueryExpressionFocusedContext;
+  class CompositeQueryExpressionAmbientContext;
   class QueryConjunctionContext;
   class SetOperatorContext;
-  class CompositeQueryPrimaryContext;
-  class LinearQueryStatementContext;
   class FocusedLinearQueryStatementContext;
   class FocusedLinearQueryStatementPartContext;
   class FocusedLinearQueryAndPrimitiveResultStatementPartContext;
@@ -1980,9 +1978,9 @@ class GQLParser : public antlr4::Parser {
    public:
     StatementContext(antlr4::ParserRuleContext* parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    LinearCatalogModifyingStatementContext* linearCatalogModifyingStatement();
-    LinearDataModifyingStatementContext* linearDataModifyingStatement();
     CompositeQueryStatementContext* compositeQueryStatement();
+    LinearDataModifyingStatementContext* linearDataModifyingStatement();
+    LinearCatalogModifyingStatementContext* linearCatalogModifyingStatement();
   };
 
   StatementContext* statement();
@@ -2755,13 +2753,40 @@ class GQLParser : public antlr4::Parser {
     CompositeQueryExpressionContext(antlr4::ParserRuleContext* parent,
                                     size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    CompositeQueryPrimaryContext* compositeQueryPrimary();
-    CompositeQueryExpressionContext* compositeQueryExpression();
-    QueryConjunctionContext* queryConjunction();
+    CompositeQueryExpressionFocusedContext* compositeQueryExpressionFocused();
+    CompositeQueryExpressionAmbientContext* compositeQueryExpressionAmbient();
   };
 
   CompositeQueryExpressionContext* compositeQueryExpression();
-  CompositeQueryExpressionContext* compositeQueryExpression(int precedence);
+
+  class CompositeQueryExpressionFocusedContext
+      : public antlr4::ParserRuleContext {
+   public:
+    CompositeQueryExpressionFocusedContext(antlr4::ParserRuleContext* parent,
+                                           size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    FocusedLinearQueryStatementContext* focusedLinearQueryStatement();
+    CompositeQueryExpressionFocusedContext* compositeQueryExpressionFocused();
+    QueryConjunctionContext* queryConjunction();
+  };
+
+  CompositeQueryExpressionFocusedContext* compositeQueryExpressionFocused();
+  CompositeQueryExpressionFocusedContext* compositeQueryExpressionFocused(
+      int precedence);
+  class CompositeQueryExpressionAmbientContext
+      : public antlr4::ParserRuleContext {
+   public:
+    CompositeQueryExpressionAmbientContext(antlr4::ParserRuleContext* parent,
+                                           size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    AmbientLinearQueryStatementContext* ambientLinearQueryStatement();
+    CompositeQueryExpressionAmbientContext* compositeQueryExpressionAmbient();
+    QueryConjunctionContext* queryConjunction();
+  };
+
+  CompositeQueryExpressionAmbientContext* compositeQueryExpressionAmbient();
+  CompositeQueryExpressionAmbientContext* compositeQueryExpressionAmbient(
+      int precedence);
   class QueryConjunctionContext : public antlr4::ParserRuleContext {
    public:
     QueryConjunctionContext(antlr4::ParserRuleContext* parent,
@@ -2784,27 +2809,6 @@ class GQLParser : public antlr4::Parser {
   };
 
   SetOperatorContext* setOperator();
-
-  class CompositeQueryPrimaryContext : public antlr4::ParserRuleContext {
-   public:
-    CompositeQueryPrimaryContext(antlr4::ParserRuleContext* parent,
-                                 size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    LinearQueryStatementContext* linearQueryStatement();
-  };
-
-  CompositeQueryPrimaryContext* compositeQueryPrimary();
-
-  class LinearQueryStatementContext : public antlr4::ParserRuleContext {
-   public:
-    LinearQueryStatementContext(antlr4::ParserRuleContext* parent,
-                                size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    FocusedLinearQueryStatementContext* focusedLinearQueryStatement();
-    AmbientLinearQueryStatementContext* ambientLinearQueryStatement();
-  };
-
-  LinearQueryStatementContext* linearQueryStatement();
 
   class FocusedLinearQueryStatementContext : public antlr4::ParserRuleContext {
    public:
@@ -9132,8 +9136,11 @@ class GQLParser : public antlr4::Parser {
                size_t ruleIndex,
                size_t predicateIndex) override;
 
-  bool compositeQueryExpressionSempred(
-      CompositeQueryExpressionContext* _localctx,
+  bool compositeQueryExpressionFocusedSempred(
+      CompositeQueryExpressionFocusedContext* _localctx,
+      size_t predicateIndex);
+  bool compositeQueryExpressionAmbientSempred(
+      CompositeQueryExpressionAmbientContext* _localctx,
       size_t predicateIndex);
   bool labelExpressionSempred(LabelExpressionContext* _localctx,
                               size_t predicateIndex);
@@ -9156,7 +9163,3 @@ class GQLParser : public antlr4::Parser {
 
  private:
 };
-
-}  // namespace GQL_NS
-
-using namespace GQL_NS;

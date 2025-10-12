@@ -46,8 +46,8 @@ template <>
 struct Printer<InlineProcedureCall> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const InlineProcedureCall& v) {
-    if (!v.vars.empty()) {
-      os << "(" << Sequence(v.vars, ",") << ")";
+    if (v.vars) {
+      os << "(" << Sequence(*v.vars, ",") << ")";
     }
     os << "{" << *v.spec << "}";
   }
@@ -521,31 +521,36 @@ template <>
 struct Printer<PathPatternPrefix> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const PathPatternPrefix& v) {
-    switch (v.search) {
-      case PathPatternPrefix::Search::All:
-        os << "ALL" << v.mode << "PATHS";
-        break;
-      case PathPatternPrefix::Search::Any:
-        os << "ANY" << v.number << v.mode << "PATHS";
-        break;
-      case PathPatternPrefix::Search::CountedShortestPath:
-        if (auto* number = std::get_if<ast::UnsignedInteger>(&v.number)) {
-          if (*number == 1) {
-            os << "ANY SHORTEST" << v.mode << "PATH";
-            break;
+    if (v.pathSearchPrefix) {
+      auto& psp = *v.pathSearchPrefix;
+      switch (psp.search) {
+        case PathSearchPrefix::Search::All:
+          os << "ALL" << v.mode << "PATHS";
+          break;
+        case PathSearchPrefix::Search::Any:
+          os << "ANY" << psp.number << v.mode << "PATHS";
+          break;
+        case PathSearchPrefix::Search::CountedShortestPath:
+          if (auto* number = std::get_if<ast::UnsignedInteger>(&psp.number)) {
+            if (*number == 1) {
+              os << "ANY SHORTEST" << v.mode << "PATH";
+              break;
+            }
           }
-        }
-        os << "SHORTEST" << v.number << v.mode << "PATHS";
-        break;
-      case PathPatternPrefix::Search::CountedShortestGroup:
-        if (auto* number = std::get_if<ast::UnsignedInteger>(&v.number)) {
-          if (*number == 1) {
-            os << "ALL SHORTEST" << v.mode << "PATHS";
-            break;
+          os << "SHORTEST" << psp.number << v.mode << "PATHS";
+          break;
+        case PathSearchPrefix::Search::CountedShortestGroup:
+          if (auto* number = std::get_if<ast::UnsignedInteger>(&psp.number)) {
+            if (*number == 1) {
+              os << "ALL SHORTEST" << v.mode << "PATHS";
+              break;
+            }
           }
-        }
-        os << "SHORTEST" << v.number << v.mode << "PATH GROUPS";
-        break;
+          os << "SHORTEST" << psp.number << v.mode << "PATH GROUPS";
+          break;
+      }
+    } else {
+      os << v.mode << "PATHS";
     }
   }
 };
@@ -577,8 +582,13 @@ struct Printer<SimpleMatchStatement> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const SimpleMatchStatement& v) {
     os << "MATCH" << v.pattern;
-    if (!v.yield.empty()) {
-      os << "YIELD" << Sequence(v.yield, ",");
+    if (v.yield) {
+      os << "YIELD";
+      if (!v.yield->empty()) {
+        os << Sequence(*v.yield, ",");
+      } else {
+        os << "NO BINDINGS";
+      }
     }
   }
 };
@@ -774,9 +784,6 @@ template <>
 struct Printer<LinearQueryStatementOption> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const LinearQueryStatementOption& v) {
-    os << v.queries;
-    if (v.useGraph)
-      os << "USE" << *v.useGraph;
     os << v.statements << v.result;
   }
 };
@@ -790,6 +797,22 @@ struct Printer<LinearDataModifyingStatement> {
     variant_switch(
         v.option, [&os](const LinearDataModifyingStatementBody& v) { os << v; },
         [&os](const ProcedureBody& v) { os << "{" << v << "}"; });
+  }
+};
+
+template <>
+struct Printer<CompositeQueryExpression> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const CompositeQueryExpression& v) {
+    bool isFirst = true;
+    for (auto& query : v.queries) {
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        os << v.conjunction;
+      }
+      os << query;
+    }
   }
 };
 

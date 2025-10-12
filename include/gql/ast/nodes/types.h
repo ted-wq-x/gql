@@ -44,9 +44,9 @@ enum class SimplePredefinedType {
 //     | VARCHAR (LEFT_PAREN maxLength RIGHT_PAREN)? notNull?
 //     ;
 struct StringType {
-  enum class Kind { STRING, CHAR, VARCHAR, BYTES, BINARY, VARBINARY };
+  enum class Kind { CHAR, BYTES };
 
-  Kind kind = Kind::STRING;
+  Kind kind = Kind::CHAR;
   UnsignedInteger minLength = 0;
   std::optional<UnsignedInteger> maxLength;
 };
@@ -78,6 +78,7 @@ enum class SimpleNumericType {
   Int128,
   Int256,
   SmallInt,
+  Int,
   BigInt,
   UInt8,
   UInt16,
@@ -86,6 +87,7 @@ enum class SimpleNumericType {
   UInt128,
   UInt256,
   USmallInt,
+  UInt,
   UBigInt,
   Float16,
   Float32,
@@ -96,13 +98,11 @@ enum class SimpleNumericType {
   Double
 };
 
-struct PrecisionNumericType {
-  enum class Type { Int, UInt };
-
-  Type type;
-  std::optional<uint64_t> precision;
+struct BinaryExactUserNumericType {
+  bool isSigned = false;
+  uint64_t precision = 0;
 };
-GQL_AST_STRUCT(PrecisionNumericType, type, precision)
+GQL_AST_STRUCT(BinaryExactUserNumericType, isSigned, precision)
 
 struct ScaleNumericType {
   enum class Type { Decimal, Float };
@@ -395,17 +395,18 @@ GQL_AST_STRUCT(RecordType, fields)
 //     ;
 struct ValueType : NodeBase<ValueType> {
   struct List {
+    bool isGroup = false;
     std::optional<ValueTypePtr> valueType;
     std::optional<UnsignedInteger> maxLength;
   };
   struct Union {
-    std::vector<ValueTypePtr> types;
+    std::vector<ValueTypePtr> types;  // At least one type
   };
 
   std::variant<SimplePredefinedType,
                StringType,
                SimpleNumericType,
-               PrecisionNumericType,
+               BinaryExactUserNumericType,
                ScaleNumericType,
                GraphReferenceValueType,
                BindingTableReferenceValueType,

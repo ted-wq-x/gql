@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gql/rewrite/simplified_path_pattern.h"
+#include "gql/rewrite.h"
 
 #include "gql/ast/algorithm.h"
-#include "gql/ast/error.h"
 #include "gql/ast/nodes/statements.h"
+#include "gql/error.h"
 
 namespace gql::rewrite {
 
@@ -32,7 +32,7 @@ ast::ParenthesizedPathPatternExpressionPtr Rewrite(
 ast::LabelExpressionPtr RewriteAsLabelExpression(
     const ast::SimplifiedPrimary& primary) {
   if (auto* label_name = std::get_if<ast::LabelName>(&primary)) {
-    ast::LabelExpressionPtr expr{new ast::LabelExpression};
+    ast::LabelExpressionPtr expr;
     expr->SetInputPosition(label_name->inputPosition());
     expr->option = *label_name;
     return expr;
@@ -47,7 +47,7 @@ ast::LabelExpressionPtr RewriteAsLabelExpression(
     return inner;
   }
 
-  ast::LabelExpressionPtr result{new ast::LabelExpression};
+  ast::LabelExpressionPtr result;
   result->SetInputPosition(tertiary.inputPosition());
   auto& logical = result->option.emplace<ast::LabelExpression::Negation>();
   logical.expr = std::move(inner);
@@ -58,12 +58,14 @@ ast::LabelExpressionPtr RewriteAsLabelExpression(
     const ast::SimplifiedFactorHigh& factor) {
   if (!std::holds_alternative<ast::SimplifiedFactorHigh::NoQuantifier>(
           factor.quantifier)) {
-    throw ast::ErrorWithNode("Quantifier is not expected", factor);
+    throw SyntaxRuleError(factor, ErrorCode::E0091,
+                          "Quantifier is not expected");
   }
 
   auto& tertiary = *factor.tertiary;
   if (tertiary.direction) {
-    throw ast::ErrorWithNode("Direction is not expected", tertiary);
+    throw SyntaxRuleError(tertiary, ErrorCode::E0092,
+                          "Direction is not expected");
   }
   return RewriteAsLabelExpression(tertiary);
 }
@@ -74,7 +76,7 @@ ast::LabelExpressionPtr RewriteAsLabelExpression(
     return RewriteAsLabelExpression(conjunction.factors[0]);
   }
 
-  ast::LabelExpressionPtr result{new ast::LabelExpression};
+  ast::LabelExpressionPtr result;
   result->SetInputPosition(conjunction.inputPosition());
   auto& logical = result->option.emplace<ast::LabelExpression::Logical>();
   logical.op = ast::LabelExpression::Logical::Op::And;
@@ -88,7 +90,8 @@ ast::LabelExpressionPtr RewriteAsLabelExpression(
 ast::LabelExpressionPtr RewriteAsLabelExpression(
     const ast::SimplifiedTerm& term) {
   if (term.factors.size() != 1) {
-    throw ast::ErrorWithNode("Concatenation is not expected", term);
+    throw SyntaxRuleError(term, ErrorCode::E0093,
+                          "Concatenation is not expected");
   }
 
   return RewriteAsLabelExpression(term.factors[0]);
@@ -97,14 +100,15 @@ ast::LabelExpressionPtr RewriteAsLabelExpression(
 ast::LabelExpressionPtr RewriteAsLabelExpression(
     const ast::SimplifiedContents& contents) {
   if (contents.op == ast::SimplifiedContents::Op::MultisetAlternation) {
-    throw ast::ErrorWithNode("Multiset alternation is not expected", contents);
+    throw SyntaxRuleError(contents, ErrorCode::E0094,
+                          "Multiset alternation is not expected");
   }
 
   if (contents.terms.size() == 1) {
     return RewriteAsLabelExpression(contents.terms[0]);
   }
 
-  ast::LabelExpressionPtr result{new ast::LabelExpression};
+  ast::LabelExpressionPtr result;
   result->SetInputPosition(contents.inputPosition());
   auto& logical = result->option.emplace<ast::LabelExpression::Logical>();
   logical.op = ast::LabelExpression::Logical::Op::Or;
@@ -186,8 +190,7 @@ ast::PathTerm Rewrite(const ast::SimplifiedTerm& term,
 ast::ParenthesizedPathPatternExpressionPtr Rewrite(
     const ast::SimplifiedContents& contents,
     ast::EdgeDirectionPattern direction) {
-  auto result =
-      gql::ast::make_copyable<ast::ParenthesizedPathPatternExpression>();
+  ast::ParenthesizedPathPatternExpressionPtr result;
   result->SetInputPosition(contents.inputPosition());
   result->pattern.SetInputPosition(contents.inputPosition());
   result->pattern.op = contents.op;

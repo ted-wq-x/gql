@@ -16,7 +16,7 @@
 
 #include "gql/ast/print.h"
 #include "gql/parser/parser.h"
-#include "gql/rewrite/simplified_path_pattern.h"
+#include "gql/rewrite.h"
 #include "input_positions_test.h"
 
 struct RewriteTestParam {
@@ -24,34 +24,41 @@ struct RewriteTestParam {
   std::string expected;
 };
 
-class RewriteTest : public testing::TestWithParam<RewriteTestParam> {};
-
-TEST_P(RewriteTest, SimplifiedPathPattern) {
-  const auto& param = GetParam();
-  gql::ast::GQLProgram program;
-  try {
-    program = gql::parser::ParseProgram(param.original.c_str());
-  } catch (const std::runtime_error& e) {
-    GTEST_FAIL() << e.what();
+class RewriteTest : public testing::TestWithParam<RewriteTestParam> {
+ protected:
+  void SetUp() override {
+    try {
+      program = gql::parser::ParseProgram(GetParam().original.c_str());
+    } catch (const std::runtime_error& e) {
+      GTEST_FAIL() << e.what();
+    }
   }
 
+  void TearDown() override {
+    gql::ast::CheckInputPositions(program);
+
+    int count = 0;
+    gql::ast::ForEachNodeInTree(program, [&count](auto*) {
+      count++;
+      return gql::ast::VisitorResult::kContinue;
+    });
+    EXPECT_GT(count, 0);
+
+    EXPECT_EQ(gql::ast::PrintTree(program), GetParam().expected);
+  }
+
+  gql::ast::GQLProgram program;
+};
+
+class SimplifiedPathPattern : public RewriteTest {};
+
+TEST_P(SimplifiedPathPattern, Check) {
   gql::rewrite::RewriteSimplifiedPathPattern(program);
-
-  gql::ast::CheckInputPositions(program);
-
-  int count = 0;
-  gql::ast::ForEachNodeInTree(program, [&count](auto*) {
-    count++;
-    return gql::ast::VisitorResult::kContinue;
-  });
-  EXPECT_GT(count, 0);
-
-  EXPECT_EQ(gql::ast::PrintTree(program), param.expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     ,
-    RewriteTest,
+    SimplifiedPathPattern,
     testing::Values(
         RewriteTestParam{
             R"(MATCH (p :Person)-/IS_FRIENDS_WITH/->(friend :Person) WHERE EXISTS {MATCH (p)-/WORKS_FOR/->(:Company {name: "GQL, Inc."})} RETURN p, r, friend)",
@@ -68,3 +75,23 @@ INSTANTIATE_TEST_SUITE_P(
         RewriteTestParam{
             R"(MATCH () ~/ LABEL1 | ((!LABEL2|LABEL3)? |+| (!LABEL5>){1,3}) /~> ())",
             R"(MATCH () (~[:LABEL1]~> | ((~[:!LABEL2]~> | ~[:LABEL3]~>) ? |+| (-[:!LABEL5]->) {1, 3})) ())"}));
+
+class ElementPatterns : public RewriteTest {};
+
+TEST_P(ElementPatterns, Check) {
+  gql::rewrite::RewriteElementPatterns(program);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    ,
+    ElementPatterns,
+    testing::Values(
+        RewriteTestParam{R"(MATCH -)", R"(MATCH ()-())"},
+        RewriteTestParam{R"(MATCH -?)", R"(MATCH (()-()) ?)"},
+        RewriteTestParam{R"(MATCH ()(-()-){4})", R"(MATCH () (()-()-()) {4})"},
+        RewriteTestParam{R"(MATCH - - - | - | - -)",
+                         R"(MATCH ()-()-()-() | ()-() | ()-()-())"},
+        RewriteTestParam{
+            R"(MATCH - - - (-) (- -{3} - (- (-)-?) - - (- -){2})- - (- -) )",
+            R"(MATCH ()-()-()- (()-()) (()- (()-()) {3} - (()- (()-()) (()-()) ?) -()- (()-()-()) {2}) -()- (()-()-()))"},
+        RewriteTestParam{R"(MATCH - - -)", R"(MATCH ()-()-()-())"}));

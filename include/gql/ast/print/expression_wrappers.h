@@ -22,7 +22,7 @@ struct ValueExpressionPrimary {
   ValueExpressionPrimary(ast::ValueExpression* expr) : expr(expr) {}
   ValueExpressionPrimary(const ValueExpressionPtr& expr) : expr(expr.get()) {}
 
-  ast::ValueExpression* expr;
+  const ast::ValueExpression* expr;
 };
 
 }  // namespace gql::ast::print

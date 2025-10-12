@@ -19,9 +19,10 @@
 #include <variant>
 #include <vector>
 
-#include "gql/ast/detail/copyable_ptr.h"
 #include "gql/ast/detail/reflection.h"
+#include "gql/ast/detail/value_ptr.h"
 #include "gql/ast/print/output_stream.h"
+
 
 namespace gql::ast::print {
 
@@ -43,9 +44,9 @@ struct Printer<std::optional<T>> {
 };
 
 template <typename T>
-struct Printer<copyable_ptr<T>> {
+struct Printer<value_ptr<T>> {
   template <typename OutputStream>
-  static void Print(OutputStream& os, const copyable_ptr<T>& o) {
+  static void Print(OutputStream& os, const value_ptr<T>& o) {
     os << *o;
   }
 };

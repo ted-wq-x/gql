@@ -23,6 +23,9 @@ class ParserRuleContext;
 namespace gql::ast {
 
 struct InputPosition {
+  InputPosition() = default;
+  InputPosition(size_t line, size_t col) : line(line), col(col) {}
+
   size_t line = std::numeric_limits<size_t>::max();
   size_t col = std::numeric_limits<size_t>::max();
 
@@ -50,6 +53,8 @@ struct Node {
   void SetInputPosition(const InputPosition& inputPosition) {
     inputPosition_ = inputPosition;
   }
+
+  bool operator==(const Node& other) const = delete;
 
 #ifndef NDEBUG
   // Used only for debugging. Requires GQLParser.setBuildParseTree(true) and

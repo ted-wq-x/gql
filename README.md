@@ -90,7 +90,7 @@ void process(const gql::ast::LinearDataModifyingStatementBody& body) {
 }
 ```
 
-In certain cases, the library employs the `copyable_ptr` smart pointer class (with type aliases ending in `Ptr`) to manage recursive types. The parser ensures these pointers are always initialized, allowing safe access without additional checks.
+In certain cases, the library employs the `value_ptr` smart pointer class (with type aliases ending in `Ptr`) to manage recursive types. The parser ensures these pointers are always initialized, allowing safe access without additional checks.
 
 ## Build
 
@@ -100,7 +100,7 @@ To build the library:
 ```
 mkdir build
 cd build
-cmake ../src
+cmake ..
 make
 ```
 

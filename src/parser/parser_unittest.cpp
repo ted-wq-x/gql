@@ -17,7 +17,7 @@
 #include "generated/GQLLexer.h"
 #include "generated/GQLParser.h"
 #include "gql/ast/print.h"
-#include "gql/parser/error.h"
+#include "gql/error.h"
 
 namespace gql::parser::ast_builder {
 void BuildAST(GQLParser::UnsignedNumericLiteralContext* ctx,
@@ -115,14 +115,14 @@ TEST(ParseNode, UnsignedNumericLiteral) {
         value =
             ParseUnsignedNumericLiteral("123.456e+7890", &numberOfSyntaxErrors);
       },
-      gql::parser::OutOfRangeError);
+      gql::ParserError);
 
   EXPECT_THROW(
       {
         value = ParseUnsignedNumericLiteral(
             "3333333333333333333333333333333333333", &numberOfSyntaxErrors);
       },
-      gql::parser::OutOfRangeError);
+      gql::ParserError);
 }
 
 TEST(ParseNode, CharacterStringLiteral) {

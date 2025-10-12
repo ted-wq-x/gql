@@ -29,3 +29,13 @@ target_include_directories(antlr4_static PUBLIC
   "$<BUILD_INTERFACE:${libantlrcpp_INCLUDE_DIRS}>"
   "$<INSTALL_INTERFACE:${libantlrcpp_INCLUDE_INSTALL_DIR}>")
 target_compile_definitions(antlr4_static PUBLIC ANTLR4CPP_STATIC)
+
+add_library(antlr4_component INTERFACE)
+target_sources(antlr4_component
+  INTERFACE
+  ${libantlrcpp_SRC}
+)
+target_include_directories(antlr4_component INTERFACE
+  "$<BUILD_INTERFACE:${libantlrcpp_INCLUDE_DIRS}>"
+  "$<INSTALL_INTERFACE:${libantlrcpp_INCLUDE_INSTALL_DIR}>")
+target_compile_definitions(antlr4_component INTERFACE ANTLR4CPP_STATIC)

@@ -20,8 +20,9 @@
 #include <variant>
 #include <vector>
 
-#include "gql/ast/detail/copyable_ptr.h"
 #include "gql/ast/detail/reflection.h"
+#include "gql/ast/detail/value_ptr.h"
+
 
 namespace gql::ast {
 
@@ -79,14 +80,14 @@ struct EnumerateChildren<std::optional<T>> {
 };
 
 template <typename T>
-struct EnumerateChildren<copyable_ptr<T>> {
+struct EnumerateChildren<value_ptr<T>> {
   template <typename VisitorType>
-  static bool ForEachChild(copyable_ptr<T>& o, VisitorType&& visitor) {
+  static bool ForEachChild(value_ptr<T>& o, VisitorType&& visitor) {
     return visitor(*o);
   }
 
   template <typename VisitorType>
-  static bool ForEachChild(const copyable_ptr<T>& o, VisitorType&& visitor) {
+  static bool ForEachChild(const value_ptr<T>& o, VisitorType&& visitor) {
     return visitor(const_cast<const T&>(*o));
   }
 };

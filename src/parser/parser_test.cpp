@@ -100,7 +100,7 @@ TEST(ParserTest, ParseError) {
 
   EXPECT_THROW(
       { gql::ast::GQLProgram program = gql::parser::ParseProgram(query); },
-      gql::parser::SyntaxError);
+      gql::ParserError);
 }
 
 TEST(ASTTest, StaticCheck) {

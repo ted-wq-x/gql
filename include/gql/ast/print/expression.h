@@ -28,17 +28,17 @@ GQL_AST_ENUM_PRINTER(CompOp,
                      (NotEquals, "<>"),
                      (LessThan, "<"),
                      (GreaterThan, ">"),
-                     (LessOrEqual, "<="),
-                     (GreaterOrEqual, ">="))
+                     (LessThanOrEquals, "<="),
+                     (GreaterThanOrEquals, ">="))
 
 GQL_AST_ENUM_PRINTER_LITERAL(NormalForm, NFC, NFD, NFKC, NFKD)
 
 template <typename Condition>
 struct PrintWithParensIf {
-  PrintWithParensIf(ast::ValueExpression* expr) : expr(expr) {}
+  PrintWithParensIf(const ast::ValueExpression* expr) : expr(expr) {}
   PrintWithParensIf(const ValueExpressionPtr& expr) : expr(expr.get()) {}
 
-  ast::ValueExpression* expr;
+  const ast::ValueExpression* expr;
 };
 
 template <>

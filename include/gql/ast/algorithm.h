@@ -57,6 +57,13 @@ bool ForEachNodeInTree(NodeType& node, VisitorType&& visitor) {
 }
 
 template <typename NodeType, typename VisitorType>
+bool ForEachDescendantNodeInTree(NodeType& node, VisitorType&& visitor) {
+  return EnumerateChildren<NodeType>::ForEachChild(
+      node,
+      [&visitor](auto& node) { return ForEachNodeInTree(node, visitor); });
+}
+
+template <typename NodeType, typename VisitorType>
 bool ForEachChild(NodeType& node, VisitorType&& visitor) {
   return EnumerateChildren<NodeType>::ForEachChild(
       node, std::forward<VisitorType>(visitor));
@@ -76,19 +83,19 @@ struct FindFirstNodeOfTypeVisitor {
     return VisitorResult::kStop;
   }
 
-  TargetType* result;
+  TargetType* result = nullptr;
 };
 
 template <typename TargetType, typename Func>
 struct ForEachNodeOfTypeVisitor {
-  ForEachNodeOfTypeVisitor(Func& func) : func(func) {}
+  explicit ForEachNodeOfTypeVisitor(Func& func) : func(func) {}
 
   template <typename NodeType>
-  auto operator()(NodeType*) {
+  auto operator()(NodeType*) const {
     return VisitorResult::kContinue;
   }
 
-  VisitorResult operator()(TargetType* node) { return func(*node); }
+  VisitorResult operator()(TargetType* node) const { return func(*node); }
 
  private:
   Func& func;
@@ -98,15 +105,22 @@ struct ForEachNodeOfTypeVisitor {
 
 template <typename NodeType, typename RootType>
 NodeType* FindFirstNodeOfType(RootType& root) {
-  detail::FindFirstNodeOfTypeVisitor<NodeType> visitor{};
+  detail::FindFirstNodeOfTypeVisitor<NodeType> visitor;
   ForEachNodeInTree(root, visitor);
   return visitor.result;
 }
 
 template <typename NodeType, typename RootType>
 const NodeType* FindFirstNodeOfType(const RootType& root) {
-  detail::FindFirstNodeOfTypeVisitor<const NodeType> visitor{};
+  detail::FindFirstNodeOfTypeVisitor<const NodeType> visitor;
   ForEachNodeInTree(root, visitor);
+  return visitor.result;
+}
+
+template <typename NodeType, typename RootType>
+const NodeType* FindFirstDescendantNodeOfType(const RootType& root) {
+  detail::FindFirstNodeOfTypeVisitor<const NodeType> visitor;
+  ForEachDescendantNodeInTree(root, visitor);
   return visitor.result;
 }
 

@@ -19,7 +19,7 @@
 namespace gql::ast {
 
 struct Statement;
-using StatementPtr = copyable_ptr<Statement>;
+using StatementPtr = value_ptr<Statement>;
 
 // yieldItemName
 //     : fieldName
@@ -36,7 +36,7 @@ using YieldItemAlias = BindingVariable;
 //     ;
 struct YieldItem : NodeBase<YieldItem> {
   YieldItemName name;
-  std::optional<YieldItemAlias> alias;
+  std::optional<YieldItemAlias> alias;  // Rewrite may make |alias| non-optional
 };
 GQL_AST_STRUCT(YieldItem, name, alias)
 
@@ -58,7 +58,7 @@ using YieldClause = std::vector<YieldItem>;
 // inlineProcedureCall
 //    : variableScopeClause? nestedProcedureSpecification
 struct InlineProcedureCall : NodeBase<InlineProcedureCall> {
-  std::vector<BindingVariableReference> vars;
+  std::optional<std::vector<BindingVariableReference>> vars;
   ProcedureBodyPtr spec;
 };
 GQL_AST_STRUCT(InlineProcedureCall, vars, spec)
@@ -83,7 +83,9 @@ GQL_AST_STRUCT(NamedProcedureCall, proc, args, yield)
 // procedureCall
 //    : inlineProcedureCall
 //    | namedProcedureCall
-using ProcedureCall = std::variant<InlineProcedureCall, NamedProcedureCall>;
+using ProcedureCall = std::variant<InlineProcedureCall,
+                                   NamedProcedureCall  // GP04 feature
+                                   >;
 
 // callProcedureStatement
 //    : OPTIONAL? CALL procedureCall
@@ -179,17 +181,19 @@ GQL_AST_STRUCT(SessionSetValueParameterClause, paramName, initializer)
 //    | sessionSetBindingTableParameterClause
 //    | sessionSetValueParameterClause
 using SessionSetParameterClause =
-    std::variant<SessionSetGraphParameterClause,
-                 SessionSetBindingTableParameterClause,
-                 SessionSetValueParameterClause>;
+    std::variant<SessionSetGraphParameterClause,         // GS01 feature
+                 SessionSetBindingTableParameterClause,  // GS02 feature
+                 SessionSetValueParameterClause          // GS03 feature
+                 >;
 
 // sessionSetCommand
 //    : SESSION SET (sessionSetSchemaClause | sessionSetGraphClause |
 //    sessionSetTimeZoneClause | sessionSetParameterClause)
-using SessionSetCommand = std::variant<SessionSetSchemaClause,
-                                       SessionSetGraphClause,
-                                       SessionSetTimeZoneClause,
-                                       SessionSetParameterClause>;
+using SessionSetCommand =
+    std::variant<SessionSetSchemaClause,
+                 SessionSetGraphClause,
+                 SessionSetTimeZoneClause,  // GS15 feature
+                 SessionSetParameterClause>;
 
 // sessionResetArguments
 //    : ALL? (PARAMETERS | CHARACTERISTICS)
@@ -286,9 +290,11 @@ GQL_AST_STRUCT(ValueVariableDefinition, var, initializer)
 //    : graphVariableDefinition
 //    | bindingTableVariableDefinition
 //    | valueVariableDefinition
-using BindingVariableDefinition = std::variant<GraphVariableDefinition,
-                                               BindingTableVariableDefinition,
-                                               ValueVariableDefinition>;
+using BindingVariableDefinition =
+    std::variant<GraphVariableDefinition,         // GP11 feature
+                 BindingTableVariableDefinition,  // GP08 feature
+                 ValueVariableDefinition          // GP05 feature
+                 >;
 
 // bindingVariableDefinitionBlock
 //    : bindingVariableDefinition+
@@ -296,7 +302,7 @@ using BindingVariableDefinition = std::variant<GraphVariableDefinition,
 // nextStatement
 //    : NEXT yieldClause? statement
 struct NextStatement {
-  YieldClause yield;
+  YieldClause yield;  // Container is empty if clause is not present.
   StatementPtr statement;
 };
 GQL_AST_STRUCT(NextStatement, yield, statement)
@@ -305,7 +311,7 @@ GQL_AST_STRUCT(NextStatement, yield, statement)
 //    : statement nextStatement*
 struct StatementBlock : NodeBase<StatementBlock> {
   StatementPtr firstStatement;
-  std::vector<NextStatement> nextStatements;
+  std::vector<NextStatement> nextStatements;  // GQ20 feature
 };
 GQL_AST_STRUCT(StatementBlock, firstStatement, nextStatements)
 
@@ -322,8 +328,8 @@ using AtSchemaClause = SchemaReference;
 // procedureBody
 //    : atSchemaClause? bindingVariableDefinitionBlock? statementBlock
 struct ProcedureBody : NodeBase<ProcedureBody> {
-  std::optional<AtSchemaClause> schema;
-  std::vector<BindingVariableDefinition> vars;
+  std::optional<AtSchemaClause> schema;         // GP16 feature
+  std::vector<BindingVariableDefinition> vars;  // GP17 feature
   StatementBlock statements;
 };
 GQL_AST_STRUCT(ProcedureBody, schema, vars, statements)
@@ -432,13 +438,14 @@ GQL_AST_STRUCT(DropGraphTypeStatement, ifExists, graphType)
 // simpleCatalogModifyingStatement
 //    : primitiveCatalogModifyingStatement
 //    | callCatalogModifyingProcedureStatement
-using SimpleCatalogModifyingStatement = std::variant<CreateSchemaStatement,
-                                                     DropSchemaStatement,
-                                                     CreateGraphStatement,
-                                                     DropGraphStatement,
-                                                     CreateGraphTypeStatement,
-                                                     DropGraphTypeStatement,
-                                                     CallProcedureStatement>;
+using SimpleCatalogModifyingStatement =
+    std::variant<CreateSchemaStatement,     // GC01 feature
+                 DropSchemaStatement,       // GC01 feature
+                 CreateGraphStatement,      // GC04 feature
+                 DropGraphStatement,        // GC04 feature
+                 CreateGraphTypeStatement,  // GC02 feature
+                 DropGraphTypeStatement,    // GC02 feature
+                 CallProcedureStatement>;
 
 // linearCatalogModifyingStatement
 //    : simpleCatalogModifyingStatement+
@@ -551,8 +558,10 @@ GQL_AST_STRUCT(SetLabelItem, var, label)
 //    : setPropertyItem
 //    | setAllPropertiesItem
 //    | setLabelItem
-using SetItem =
-    std::variant<SetPropertyItem, SetAllPropertiesItem, SetLabelItem>;
+using SetItem = std::variant<SetPropertyItem,
+                             SetAllPropertiesItem,
+                             SetLabelItem  // GD02 feature
+                             >;
 
 // setItemList
 //    : setItem (COMMA setItem)*
@@ -583,7 +592,9 @@ GQL_AST_STRUCT(RemoveLabelItem, var, label)
 // removeItem
 //    : removePropertyItem
 //    | removeLabelItem
-using RemoveItem = std::variant<RemovePropertyItem, RemoveLabelItem>;
+using RemoveItem = std::variant<RemovePropertyItem,
+                                RemoveLabelItem  // GD02 feature
+                                >;
 
 // removeItemList
 //    : removeItem (COMMA removeItem)*
@@ -631,6 +642,12 @@ struct SetOperator : NodeBase<SetOperator> {
   Kind kind = Kind::UNION;
   SetQuantifier quantifier =
       SetQuantifier::DISTINCT;  // DISTINCT is implicit value.
+
+  bool MaybeNotSet() const {
+    // QueryConjunction is not initialized in CompositeQueryExpression if there
+    // is just one query.
+    return kind == Kind::UNION && quantifier == SetQuantifier::DISTINCT;
+  }
 };
 GQL_AST_STRUCT(SetOperator, kind, quantifier)
 
@@ -696,11 +713,7 @@ using NumberOfGroups = NonNegativeIntegerSpecification;
 //    : allPathSearch
 //    | anyPathSearch
 //    | shortestPathSearch
-
-// pathPatternPrefix
-//    : pathModePrefix
-//    | pathSearchPrefix
-struct PathPatternPrefix : NodeBase<PathPatternPrefix> {
+struct PathSearchPrefix {
   enum class Search {
     All,
     Any,
@@ -711,9 +724,17 @@ struct PathPatternPrefix : NodeBase<PathPatternPrefix> {
   Search search = Search::All;
   NumberOfGroups number =
       1u;  // Number of Paths or Groups. 1 is implicit value.
-  PathMode mode = PathMode::WALK;  // WALK is implicit value.
 };
-GQL_AST_STRUCT(PathPatternPrefix, search, number, mode)
+GQL_AST_STRUCT(PathSearchPrefix, search, number)
+
+// pathPatternPrefix
+//    : pathModePrefix
+//    | pathSearchPrefix
+struct PathPatternPrefix : NodeBase<PathPatternPrefix> {
+  PathMode mode = PathMode::WALK;  // WALK is implicit value.
+  std::optional<PathSearchPrefix> pathSearchPrefix;
+};
+GQL_AST_STRUCT(PathPatternPrefix, mode, pathSearchPrefix)
 
 // pathVariableDeclaration
 //    : pathVariable EQUALS_OPERATOR
@@ -744,7 +765,8 @@ using PathPatternList = std::vector<PathPattern>;
 struct GraphPattern : NodeBase<GraphPattern> {
   std::optional<MatchMode> matchMode;
   PathPatternList patterns;
-  std::optional<KeepClause> keep;
+  std::optional<KeepClause>
+      keep;  // Eliminated by rewrite::RewritePathPatternPrefix
   std::optional<GraphPatternWhereClause> where;
 };
 GQL_AST_STRUCT(GraphPattern, matchMode, patterns, keep, where)
@@ -767,12 +789,14 @@ using GraphPatternYieldItem = BindingVariableReference;
 //    : MATCH graphPatternBindingTable
 struct SimpleMatchStatement : NodeBase<SimpleMatchStatement> {
   GraphPattern pattern;
-  std::vector<GraphPatternYieldItem> yield;
+  std::optional<std::vector<GraphPatternYieldItem>>
+      yield;  // Not set when YIELD clause is missing. Empty container means NO
+              // BINDINGS.
 };
 GQL_AST_STRUCT(SimpleMatchStatement, pattern, yield)
 
 struct MatchStatementBlock;
-using MatchStatementBlockPtr = copyable_ptr<MatchStatementBlock>;
+using MatchStatementBlockPtr = value_ptr<MatchStatementBlock>;
 
 // optionalOperand
 //    : simpleMatchStatement
@@ -889,9 +913,9 @@ using SortSpecificationList = std::vector<SortSpecification>;
 //    | offsetClause limitClause?
 //    | limitClause
 struct OrderByAndPageStatement : NodeBase<OrderByAndPageStatement> {
-  std::vector<SortSpecification> orderBy;
-  std::optional<NonNegativeIntegerSpecification> offset;
-  std::optional<NonNegativeIntegerSpecification> limit;
+  SortSpecificationList orderBy;
+  std::optional<NonNegativeIntegerSpecification> offset;  // GQ12 feature
+  std::optional<NonNegativeIntegerSpecification> limit;   // GQ13 feature
 };
 GQL_AST_STRUCT(OrderByAndPageStatement, orderBy, offset, limit)
 
@@ -939,7 +963,8 @@ struct ReturnStatementBody : NodeBase<ReturnStatementBody> {
   SetQuantifier quantifier = SetQuantifier::ALL;  // ALL is implicit value.
   std::optional<ReturnItemList>
       items;  // Not set means ASTERISK; empty list means NO BINDINGS
-  GroupingElementList groupBy;
+              // Asterisk rewrite may make |items| non-optional.
+  GroupingElementList groupBy;  // GQ15 feature
 };
 GQL_AST_STRUCT(ReturnStatementBody, quantifier, items, groupBy)
 
@@ -1064,12 +1089,13 @@ GQL_AST_STRUCT(FilterStatement, condition)
 // simpleQueryStatement
 //    : primitiveQueryStatement
 //    | callQueryStatement
-using SimpleQueryStatement = std::variant<MatchStatement,
-                                          LetStatement,
-                                          ForStatement,
-                                          FilterStatement,
-                                          OrderByAndPageStatement,
-                                          CallProcedureStatement>;
+using SimpleQueryStatement =
+    std::variant<MatchStatement,
+                 LetStatement,     // GQ09 feature. May be rewritten
+                 ForStatement,     // GQ10 or GQ23 feature
+                 FilterStatement,  // GQ08 feature
+                 OrderByAndPageStatement,
+                 CallProcedureStatement>;
 
 // simpleLinearQueryStatement
 //    : simpleQueryStatement+
@@ -1078,7 +1104,7 @@ using SimpleLinearQueryStatement = std::vector<SimpleQueryStatement>;
 // focusedNestedQuerySpecification
 //    : useGraphClause nestedQuerySpecification
 struct NestedQuerySpecification : NodeBase<NestedQuerySpecification> {
-  std::optional<UseGraphClause> useGraph;
+  std::optional<UseGraphClause> useGraph;  // GQ01 feature
   ProcedureBody procedure;
 };
 GQL_AST_STRUCT(NestedQuerySpecification, useGraph, procedure)
@@ -1115,20 +1141,26 @@ GQL_AST_STRUCT(FocusedLinearQueryStatementPart, useGraph, statements)
 
 // Made as a combination of Focused* and Ambient* grammar rules
 struct LinearQueryStatementOption : NodeBase<LinearQueryStatementOption> {
-  std::vector<FocusedLinearQueryStatementPart> queries;
-  std::optional<UseGraphClause> useGraph;
-  SimpleLinearQueryStatement statements;  // Can be empty
+  std::variant<SimpleLinearQueryStatement,
+               std::vector<FocusedLinearQueryStatementPart>  // GQ01 feature
+               >
+      statements;
   PrimitiveResultStatement result;
 };
-GQL_AST_STRUCT(LinearQueryStatementOption,
-               queries,
-               useGraph,
-               statements,
-               result)
+GQL_AST_STRUCT(LinearQueryStatementOption, statements, result)
 
-using LinearQueryStatement = std::variant<LinearQueryStatementOption,
-                                          NestedQuerySpecification,
-                                          SelectStatement>;
+struct FocusedPrimitiveResultStatement
+    : NodeBase<FocusedPrimitiveResultStatement> {
+  UseGraphClause useGraph;
+  PrimitiveResultStatement result;
+};
+GQL_AST_STRUCT(FocusedPrimitiveResultStatement, useGraph, result)
+
+using LinearQueryStatement =
+    std::variant<LinearQueryStatementOption,
+                 NestedQuerySpecification,
+                 FocusedPrimitiveResultStatement,  // GQ01 feature
+                 SelectStatement>;
 
 // compositeQueryPrimary
 //    : linearQueryStatement
@@ -1138,15 +1170,10 @@ using CompositeQueryPrimary = LinearQueryStatement;
 //    : compositeQueryExpression queryConjunction compositeQueryPrimary
 //    | compositeQueryPrimary
 struct CompositeQueryExpression : NodeBase<CompositeQueryExpression> {
-  struct SubsequentQuery {
-    QueryConjunction conjunction;
-    CompositeQueryPrimary query;
-  };
-  CompositeQueryPrimary firstQuery;
-  std::vector<SubsequentQuery> subsequentQueries;
+  QueryConjunction conjunction;
+  std::vector<CompositeQueryPrimary> queries;
 };
-GQL_AST_STRUCT(CompositeQueryExpression, firstQuery, subsequentQueries)
-GQL_AST_STRUCT(CompositeQueryExpression::SubsequentQuery, conjunction, query)
+GQL_AST_STRUCT(CompositeQueryExpression, conjunction, queries)
 
 // compositeQueryStatement
 //    : compositeQueryExpression
@@ -1164,8 +1191,9 @@ using CompositeQueryStatement = CompositeQueryExpression;
 //    | simpleDataModifyingStatement
 using SimpleDataAccessingStatement =
     std::variant<SimpleQueryStatement,
-                 PrimitiveDataModifyingStatement,
-                 CallProcedureStatement>;
+                 PrimitiveDataModifyingStatement,  // GD01 feature
+                 CallProcedureStatement            // GD01 feature
+                 >;
 
 // focusedLinearDataModifyingStatementBody
 //    : useGraphClause simpleLinearDataAccessingStatement
@@ -1195,7 +1223,7 @@ GQL_AST_STRUCT(LinearDataModifyingStatementBody, statements, result)
 //    : focusedLinearDataModifyingStatement
 //    | ambientLinearDataModifyingStatement
 struct LinearDataModifyingStatement : NodeBase<LinearDataModifyingStatement> {
-  std::optional<UseGraphClause> useGraph;
+  std::optional<UseGraphClause> useGraph;  // GP01 feature
   std::variant<LinearDataModifyingStatementBody, ProcedureBody> option;
 };
 GQL_AST_STRUCT(LinearDataModifyingStatement, useGraph, option)
@@ -1217,9 +1245,9 @@ GQL_AST_STRUCT(Statement, option)
 //    | procedureSpecification endTransactionCommand?
 //    | endTransactionCommand
 struct TransactionActivity : NodeBase<TransactionActivity> {
-  std::optional<StartTransactionCommand> startCmd;
+  std::optional<StartTransactionCommand> startCmd;  // GT01 feature
   std::optional<ProcedureBody> procedure;
-  std::optional<EndTransactionCommand> endCmd;
+  std::optional<EndTransactionCommand> endCmd;  // GT01 feature
 };
 GQL_AST_STRUCT(TransactionActivity, startCmd, procedure, endCmd)
 

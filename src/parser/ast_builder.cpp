@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// "gql/error.h" includes "fmt/format.h" which includes "cstdio" which defines
+// "EOF" macro. ATNLR undefines it, so we need to include "gql/error.h" first.
+#include "gql/error.h"
+
 #include "ast_builder.h"
 
 #include "gql/ast/ast.h"
-#include "gql/parser/error.h"
 #include "unescape_string.h"
 
 #define GQL_ASSERT(condition) assert(condition)
@@ -33,6 +36,10 @@ void BuildAST(GQLParser::ProcedureBodyContext* ctx, ast::ProcedureBody& value);
 void BuildAST(GQLParser::GraphPatternContext* ctx, ast::GraphPattern& value);
 void BuildAST(GQLParser::MatchStatementBlockContext* ctx,
               ast::MatchStatementBlock& value);
+
+namespace {
+const char kValueOutOfRangeErrorFmt[] = "Value out of range {0}";
+}
 
 template <class Context, class Node>
 void AssignInputPosition(Context* ctx, Node& value) {
@@ -85,8 +92,9 @@ void BuildAST(GQLParser::UnsignedDecimalIntegerContext* ctx,
   try {
     value = std::stoull(text, &pos, 10);
   } catch (const std::out_of_range& e) {
-    throw OutOfRangeError(token->getLine(), token->getCharPositionInLine(),
-                          e.what(), token->getText());
+    throw ParserError({token->getLine(), token->getCharPositionInLine()},
+                      ErrorCode::ValueOutOfRange, kValueOutOfRangeErrorFmt,
+                      e.what(), token->getText());
   }
   GQL_ASSERT(pos == text.size());
 }
@@ -120,8 +128,9 @@ void BuildAST(GQLParser::UnsignedIntegerContext* ctx,
   try {
     value = std::stoull(text, &pos, base);
   } catch (const std::out_of_range& e) {
-    throw OutOfRangeError(token->getLine(), token->getCharPositionInLine(),
-                          e.what(), token->getText());
+    throw ParserError({token->getLine(), token->getCharPositionInLine()},
+                      ErrorCode::ValueOutOfRange, kValueOutOfRangeErrorFmt,
+                      e.what(), token->getText());
   }
   GQL_ASSERT(pos == text.size());
 }
@@ -184,8 +193,9 @@ void BuildAST(GQLParser::UnsignedNumericLiteralContext* ctx,
     value = std::stod(text, &pos);
   } catch (const std::out_of_range& e) {
     auto token = ctx->getStart();
-    throw OutOfRangeError(token->getLine(), token->getCharPositionInLine(),
-                          e.what(), token->getText());
+    throw ParserError({token->getLine(), token->getCharPositionInLine()},
+                      ErrorCode::ValueOutOfRange, kValueOutOfRangeErrorFmt,
+                      e.what(), token->getText());
   }
   GQL_ASSERT(pos == text.size());
 }
@@ -213,8 +223,7 @@ void BuildAST(GQLParser::ListValueConstructorByEnumerationContext* ctx,
   AssignInputPosition(ctx, value);
   if (auto ctx2 = ctx->listElementList()) {
     for (auto ctx3 : ctx2->listElement()) {
-      BuildAST(ctx3->valueExpression(),
-               *value.elements.emplace_back().get_or_create());
+      BuildAST(ctx3->valueExpression(), *value.elements.emplace_back());
     }
   }
 }
@@ -271,7 +280,7 @@ void BuildAST(GQLParser::RecordConstructorContext* ctx,
         auto& value2 = value.emplace_back();
         AssignInputPosition(ctx4, value2);
         BuildAST(ctx4->fieldName()->identifier(), value2.name);
-        BuildAST(ctx4->valueExpression(), *value2.value.get_or_create());
+        BuildAST(ctx4->valueExpression(), *value2.value);
       }
     }
   }
@@ -290,7 +299,7 @@ void BuildAST(GQLParser::NonNegativeIntegerSpecificationContext* ctx,
 
 void BuildAST(GQLParser::GeneralLiteralContext* ctx,
               ast::GeneralLiteral& value) {
-  if (auto ctx2 = ctx->BOOLEAN_LITERAL()) {
+  if (ctx->BOOLEAN_LITERAL()) {
     value = ast::TruthValue();
   } else if (auto ctx2 = ctx->characterStringLiteral()) {
     BuildAST(ctx2, value.emplace<ast::CharacterStringLiteral>());
@@ -303,7 +312,7 @@ void BuildAST(GQLParser::GeneralLiteralContext* ctx,
     auto& value2 = value.emplace<ast::DurationLiteral>();
     AssignInputPosition(ctx2, value2);
     BuildAST(ctx2->durationString()->characterStringLiteral(), value2.value);
-  } else if (auto ctx2 = ctx->nullLiteral()) {
+  } else if (ctx->nullLiteral()) {
     value = ast::NullLiteral();
   } else if (auto ctx2 = ctx->listLiteral()) {
     BuildAST(ctx2->listValueConstructorByEnumeration(),
@@ -450,7 +459,7 @@ void BuildAST(GQLParser::GraphReferenceContext* ctx,
   } else if (auto ctx2 = ctx->delimitedGraphName()) {
     auto& value2 = value.option.emplace<ast::GraphReference::ParentAndName>();
     BuildAST(ctx2, value2.name);
-  } else if (auto ctx2 = ctx->homeGraph()) {
+  } else if (ctx->homeGraph()) {
     value.option.emplace<ast::HomeGraph>();
   } else {
     BuildAST(ctx->referenceParameterSpecification(),
@@ -540,8 +549,7 @@ void BuildAST(GQLParser::PropertyTypesSpecificationContext* ctx,
       auto& property = value.properties.emplace_back();
       AssignInputPosition(ctx3, property);
       BuildAST(ctx3->propertyName()->identifier(), property.name);
-      BuildAST(ctx3->propertyValueType()->valueType(),
-               *property.type.get_or_create());
+      BuildAST(ctx3->propertyValueType()->valueType(), *property.type);
     }
   }
 }
@@ -769,11 +777,15 @@ void BuildAST(GQLParser::VerboseBinaryExactNumericTypeContext* ctx,
         isSigned ? ast::SimpleNumericType{ast::SimpleNumericType::BigInt}
                  : ast::SimpleNumericType{ast::SimpleNumericType::UBigInt};
   } else {
-    auto& value2 = value.typeOption.emplace<ast::PrecisionNumericType>();
-    value2.type = isSigned ? ast::PrecisionNumericType::Type::Int
-                           : ast::PrecisionNumericType::Type::UInt;
     if (auto ctx2 = ctx->precision()) {
-      BuildAST(ctx2->unsignedDecimalInteger(), value2.precision.emplace());
+      auto& value2 =
+          value.typeOption.emplace<ast::BinaryExactUserNumericType>();
+      value2.isSigned = isSigned;
+      BuildAST(ctx2->unsignedDecimalInteger(), value2.precision);
+    } else {
+      value.typeOption =
+          isSigned ? ast::SimpleNumericType{ast::SimpleNumericType::UInt}
+                   : ast::SimpleNumericType{ast::SimpleNumericType::UInt};
     }
   }
 }
@@ -807,11 +819,14 @@ void BuildAST(GQLParser::NumericTypeContext* ctx, ast::ValueType& value) {
           value.typeOption =
               ast::SimpleNumericType{ast::SimpleNumericType::SmallInt};
         } else if (ctx4->INT()) {
-          auto& value2 = value.typeOption.emplace<ast::PrecisionNumericType>();
-          value2.type = ast::PrecisionNumericType::Type::Int;
           if (auto ctx5 = ctx4->precision()) {
-            BuildAST(ctx5->unsignedDecimalInteger(),
-                     value2.precision.emplace());
+            auto& value2 =
+                value.typeOption.emplace<ast::BinaryExactUserNumericType>();
+            value2.isSigned = true;
+            BuildAST(ctx5->unsignedDecimalInteger(), value2.precision);
+          } else {
+            value.typeOption =
+                ast::SimpleNumericType{ast::SimpleNumericType::Int};
           }
         } else if (ctx4->BIGINT()) {
           value.typeOption =
@@ -845,11 +860,14 @@ void BuildAST(GQLParser::NumericTypeContext* ctx, ast::ValueType& value) {
           value.typeOption =
               ast::SimpleNumericType{ast::SimpleNumericType::USmallInt};
         } else if (ctx5->UINT()) {
-          auto& value2 = value.typeOption.emplace<ast::PrecisionNumericType>();
-          value2.type = ast::PrecisionNumericType::Type::UInt;
           if (auto ctx6 = ctx5->precision()) {
-            BuildAST(ctx6->unsignedDecimalInteger(),
-                     value2.precision.emplace());
+            auto& value2 =
+                value.typeOption.emplace<ast::BinaryExactUserNumericType>();
+            value2.isSigned = false;
+            BuildAST(ctx6->unsignedDecimalInteger(), value2.precision);
+          } else {
+            value.typeOption =
+                ast::SimpleNumericType{ast::SimpleNumericType::UInt};
           }
         } else if (ctx5->UBIGINT()) {
           value.typeOption =
@@ -912,53 +930,55 @@ void BuildAST(GQLParser::FieldTypeListContext* ctx,
     auto& field = value.fields.emplace_back();
     AssignInputPosition(fieldTypeCtx, field);
     BuildAST(fieldTypeCtx->fieldName()->identifier(), field.name);
-    BuildAST(fieldTypeCtx->valueType(), *field.type.get_or_create());
+    BuildAST(fieldTypeCtx->valueType(), *field.type);
   }
 }
 
 void BuildAST(GQLParser::CharacterStringTypeContext* ctx,
               ast::StringType& value,
               bool* notNull) {
-  if (ctx->STRING()) {
-    value.kind = ast::StringType::Kind::STRING;
-  } else if (ctx->CHAR()) {
-    value.kind = ast::StringType::Kind::CHAR;
-  } else if (ctx->VARCHAR()) {
-    value.kind = ast::StringType::Kind::VARCHAR;
+  value.kind = ast::StringType::Kind::CHAR;
+  if (ctx->CHAR()) {
+    if (auto ctx2 = ctx->fixedLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+      value.maxLength = value.minLength;
+    } else {
+      value.minLength = 1;
+      value.maxLength = 1;
+    }
+  } else {
+    if (auto ctx2 = ctx->minLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+    }
+    if (auto ctx2 = ctx->maxLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
+    }
   }
-  if (auto ctx2 = ctx->minLength()) {
-    BuildAST(ctx2->unsignedInteger(), value.minLength);
-  }
-  if (auto ctx2 = ctx->maxLength()) {
-    BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
-  }
-  if (auto ctx2 = ctx->fixedLength()) {
-    BuildAST(ctx2->unsignedInteger(), value.minLength);
-    value.maxLength = value.minLength;
-  }
+
   *notNull = !!ctx->notNull();
 }
 
 void BuildAST(GQLParser::ByteStringTypeContext* ctx,
               ast::StringType& value,
               bool* notNull) {
-  if (ctx->BYTES()) {
-    value.kind = ast::StringType::Kind::BYTES;
-  } else if (ctx->BINARY()) {
-    value.kind = ast::StringType::Kind::BINARY;
-  } else if (ctx->VARBINARY()) {
-    value.kind = ast::StringType::Kind::VARBINARY;
+  value.kind = ast::StringType::Kind::BYTES;
+  if (ctx->BINARY()) {
+    if (auto ctx2 = ctx->fixedLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+      value.maxLength = value.minLength;
+    } else {
+      value.minLength = 1;
+      value.maxLength = 1;
+    }
+  } else {
+    if (auto ctx2 = ctx->minLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+    }
+    if (auto ctx2 = ctx->maxLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
+    }
   }
-  if (auto ctx2 = ctx->minLength()) {
-    BuildAST(ctx2->unsignedInteger(), value.minLength);
-  }
-  if (auto ctx2 = ctx->maxLength()) {
-    BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
-  }
-  if (auto ctx2 = ctx->fixedLength()) {
-    BuildAST(ctx2->unsignedInteger(), value.minLength);
-    value.maxLength = value.minLength;
-  }
+
   *notNull = !!ctx->notNull();
 }
 
@@ -1118,9 +1138,9 @@ void BuildAST(GQLParser::ClosedDynamicUnionTypeAtl2Context* ctx,
           firstCtx)) {
     BuildAST(ctx2, value);
   } else {
-    BuildAST(firstCtx, *value.types.emplace_back().get_or_create());
+    BuildAST(firstCtx, *value.types.emplace_back());
   }
-  BuildAST(ctx->valueType(1), *value.types.emplace_back().get_or_create());
+  BuildAST(ctx->valueType(1), *value.types.emplace_back());
 }
 
 void BuildAST(GQLParser::ValueTypeContext* ctx, ast::ValueType& value) {
@@ -1134,7 +1154,8 @@ void BuildAST(GQLParser::ValueTypeContext* ctx, ast::ValueType& value) {
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ListValueTypeAlt1Context*>(ctx)) {
     auto& value2 = value.typeOption.emplace<ast::ValueType::List>();
-    BuildAST(ctx2->valueType(), *value2.valueType.emplace().get_or_create());
+    value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
+    BuildAST(ctx2->valueType(), *value2.valueType.emplace());
     if (auto ctx3 = ctx2->maxLength()) {
       BuildAST(ctx3->unsignedInteger(), value2.maxLength.emplace());
     }
@@ -1142,7 +1163,8 @@ void BuildAST(GQLParser::ValueTypeContext* ctx, ast::ValueType& value) {
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ListValueTypeAlt2Context*>(ctx)) {
     auto& value2 = value.typeOption.emplace<ast::ValueType::List>();
-    BuildAST(ctx2->valueType(), *value2.valueType.emplace().get_or_create());
+    value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
+    BuildAST(ctx2->valueType(), *value2.valueType.emplace());
     if (auto ctx3 = ctx2->maxLength()) {
       BuildAST(ctx3->unsignedInteger(), value2.maxLength.emplace());
     }
@@ -1150,6 +1172,7 @@ void BuildAST(GQLParser::ValueTypeContext* ctx, ast::ValueType& value) {
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ListValueTypeAlt3Context*>(ctx)) {
     auto& value2 = value.typeOption.emplace<ast::ValueType::List>();
+    value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
     if (auto ctx3 = ctx2->maxLength()) {
       BuildAST(ctx3->unsignedInteger(), value2.maxLength.emplace());
     }
@@ -1221,9 +1244,9 @@ void BuildAST(GQLParser::CompOpContext* ctx, ast::CompOp& value) {
   } else if (ctx->RIGHT_ANGLE_BRACKET()) {
     value = ast::CompOp::GreaterThan;
   } else if (ctx->LESS_THAN_OR_EQUALS_OPERATOR()) {
-    value = ast::CompOp::LessOrEqual;
+    value = ast::CompOp::LessThanOrEquals;
   } else if (ctx->GREATER_THAN_OR_EQUALS_OPERATOR()) {
-    value = ast::CompOp::GreaterOrEqual;
+    value = ast::CompOp::GreaterThanOrEquals;
   } else {
     GQL_ASSERT(false);
   }
@@ -1246,10 +1269,9 @@ void BuildAST(GQLParser::LabelExpressionDisjunctionContext* ctx,
           firstCtx)) {
     BuildAST(ctx2, value);
   } else {
-    BuildAST(firstCtx, *value.terms.emplace_back().get_or_create());
+    BuildAST(firstCtx, *value.terms.emplace_back());
   }
-  BuildAST(ctx->labelExpression(1),
-           *value.terms.emplace_back().get_or_create());
+  BuildAST(ctx->labelExpression(1), *value.terms.emplace_back());
 }
 
 void BuildAST(GQLParser::LabelExpressionConjunctionContext* ctx,
@@ -1269,10 +1291,9 @@ void BuildAST(GQLParser::LabelExpressionConjunctionContext* ctx,
           firstCtx)) {
     BuildAST(ctx2, value);
   } else {
-    BuildAST(firstCtx, *value.terms.emplace_back().get_or_create());
+    BuildAST(firstCtx, *value.terms.emplace_back());
   }
-  BuildAST(ctx->labelExpression(1),
-           *value.terms.emplace_back().get_or_create());
+  BuildAST(ctx->labelExpression(1), *value.terms.emplace_back());
 }
 
 void BuildAST(GQLParser::LabelExpressionContext* ctx,
@@ -1281,7 +1302,7 @@ void BuildAST(GQLParser::LabelExpressionContext* ctx,
   if (auto ctx2 =
           dynamic_cast<GQLParser::LabelExpressionNegationContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::LabelExpression::Negation>();
-    BuildAST(ctx2->labelExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->labelExpression(), *value2.expr);
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::LabelExpressionDisjunctionContext*>(
                      ctx)) {
@@ -1294,9 +1315,7 @@ void BuildAST(GQLParser::LabelExpressionContext* ctx,
                  dynamic_cast<GQLParser::LabelExpressionNameContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::LabelName>();
     BuildAST(ctx2->labelName()->identifier(), value2);
-  } else if (auto ctx2 =
-                 dynamic_cast<GQLParser::LabelExpressionWildcardContext*>(
-                     ctx)) {
+  } else if (dynamic_cast<GQLParser::LabelExpressionWildcardContext*>(ctx)) {
     value.option = ast::LabelExpression::Wildcard{};
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::LabelExpressionParenthesizedContext*>(
@@ -1315,23 +1334,23 @@ void BuildAST(GQLParser::NumericValueExpressionContext* ctx,
     value2.op = (ctx2->PLUS_SIGN() != nullptr)
                     ? ast::ValueExpression::Unary::Op::Positive
                     : ast::ValueExpression::Unary::Op::Negative;
-    BuildAST(ctx2->numericValueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->numericValueExpression(), *value2.expr);
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::MultDivExprAlt2Context*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
     value2.op = (ctx2->ASTERISK() != nullptr)
                     ? ast::ValueExpression::Binary::Op::Multiply
                     : ast::ValueExpression::Binary::Op::Divide;
-    BuildAST(ctx2->numericValueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->numericValueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->numericValueExpression(0), *value2.left);
+    BuildAST(ctx2->numericValueExpression(1), *value2.right);
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::AddSubtractExprAlt2Context*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
     value2.op = (ctx2->PLUS_SIGN() != nullptr)
                     ? ast::ValueExpression::Binary::Op::Add
                     : ast::ValueExpression::Binary::Op::Subtract;
-    BuildAST(ctx2->numericValueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->numericValueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->numericValueExpression(0), *value2.left);
+    BuildAST(ctx2->numericValueExpression(1), *value2.right);
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::PrimaryExprAlt2Context*>(ctx)) {
     BuildAST(ctx2->valueExpressionPrimary(), value);
@@ -1385,12 +1404,11 @@ void BuildAST(GQLParser::BindingTableExpressionContext* ctx,
   AssignInputPosition(ctx, value);
   if (auto ctx2 = ctx->nestedBindingTableQuerySpecification()) {
     BuildAST(ctx2->nestedQuerySpecification()->procedureBody(),
-             *value.option.emplace<ast::ProcedureBodyPtr>().get_or_create());
+             *value.option.emplace<ast::ProcedureBodyPtr>());
   } else if (auto ctx2 = ctx->bindingTableReference()) {
     BuildAST(ctx2, value.option.emplace<ast::BindingTableReference>());
   } else if (auto ctx2 = ctx->objectExpressionPrimary()) {
-    BuildAST(ctx2,
-             *value.option.emplace<ast::ValueExpressionPtr>().get_or_create());
+    BuildAST(ctx2, *value.option.emplace<ast::ValueExpressionPtr>());
   } else if (auto ctx2 = ctx->objectNameOrBindingVariable()) {
     BuildAST(ctx2->regularIdentifier(),
              value.option.emplace<ast::ObjectNameOrBindingVariable>());
@@ -1414,9 +1432,9 @@ void BuildAST(GQLParser::BinarySetFunctionContext* ctx,
     BuildAST(ctx2, value.quantifier);
   }
   BuildAST(ctx->dependentValueExpression()->numericValueExpression(),
-           *value.dependentValue.get_or_create());
+           *value.dependentValue);
   BuildAST(ctx->independentValueExpression()->numericValueExpression(),
-           *value.independent.get_or_create());
+           *value.independent);
 }
 
 void BuildAST(GQLParser::GeneralSetFunctionContext* ctx,
@@ -1445,7 +1463,7 @@ void BuildAST(GQLParser::GeneralSetFunctionContext* ctx,
   if (auto ctx2 = ctx->setQuantifier()) {
     BuildAST(ctx2, value.quantifier);
   }
-  BuildAST(ctx->valueExpression(), *value.value.get_or_create());
+  BuildAST(ctx->valueExpression(), *value.value);
 }
 
 void BuildAST(GQLParser::AggregateFunctionContext* ctx,
@@ -1465,12 +1483,12 @@ void BuildAST(GQLParser::PathElementListContext* ctx,
   BuildAST(ctx->pathElementListStart()
                ->nodeReferenceValueExpression()
                ->valueExpressionPrimary(),
-           *value.nodes.emplace_back().get_or_create());
+           *value.nodes.emplace_back());
   for (auto step : ctx->pathElementListStep()) {
     BuildAST(step->edgeReferenceValueExpression()->valueExpressionPrimary(),
-             *value.edges.emplace_back().get_or_create());
+             *value.edges.emplace_back());
     BuildAST(step->nodeReferenceValueExpression()->valueExpressionPrimary(),
-             *value.nodes.emplace_back().get_or_create());
+             *value.nodes.emplace_back());
   }
 }
 
@@ -1495,7 +1513,7 @@ void BuildAST(GQLParser::CastSpecificationContext* ctx,
     value.operand = ast::NullLiteral();
   } else {
     BuildAST(ctx->castOperand()->valueExpression(),
-             *value.operand.emplace<ast::ValueExpressionPtr>().get_or_create());
+             *value.operand.emplace<ast::ValueExpressionPtr>());
   }
   BuildAST(ctx->castTarget()->valueType(), value.target);
 }
@@ -1513,13 +1531,13 @@ void BuildAST(GQLParser::LetVariableDefinitionContext* ctx,
     BuildAST(ctx2->bindingVariable(), value.var);
     BuildAST(
         ctx2->optTypedValueInitializer()->valueInitializer()->valueExpression(),
-        *value.expr.get_or_create());
+        *value.expr);
     if (auto ctx3 = ctx2->optTypedValueInitializer()->valueType()) {
       BuildAST(ctx3, value.type.emplace());
     }
   } else {
     BuildAST(ctx->bindingVariable(), value.var);
-    BuildAST(ctx->valueExpression(), *value.expr.get_or_create());
+    BuildAST(ctx->valueExpression(), *value.expr);
   }
 }
 
@@ -1530,7 +1548,7 @@ void BuildAST(GQLParser::LetValueExpressionContext* ctx,
        ctx->letVariableDefinitionList()->letVariableDefinition()) {
     BuildAST(definition, value.definitions.emplace_back());
   }
-  BuildAST(ctx->valueExpression(), *value.expression.get_or_create());
+  BuildAST(ctx->valueExpression(), *value.expression);
 }
 
 void BuildAST(GQLParser::NonParenthesizedValueExpressionPrimaryContext* ctx,
@@ -1547,12 +1565,11 @@ void BuildAST(GQLParser::NonParenthesizedValueExpressionPrimaryContext* ctx,
 void BuildAST(GQLParser::WhenOperandContext* ctx, ast::WhenOperand& value) {
   AssignInputPosition(ctx, value);
   if (auto ctx2 = ctx->nonParenthesizedValueExpressionPrimary()) {
-    BuildAST(ctx2,
-             *value.option.emplace<ast::ValueExpressionPtr>().get_or_create());
+    BuildAST(ctx2, *value.option.emplace<ast::ValueExpressionPtr>());
   } else if (auto ctx2 = ctx->compOp()) {
     auto& value2 = value.option.emplace<ast::WhenOperand::Comparison>();
     BuildAST(ctx2, value2.op);
-    BuildAST(ctx->valueExpression(), *value2.value.get_or_create());
+    BuildAST(ctx->valueExpression(), *value2.value);
   } else if (auto ctx2 = ctx->nullPredicatePart2()) {
     value.option = ast::WhenOperand::IsNull();
     value.isNot = ctx2->NOT() != nullptr;
@@ -1597,7 +1614,7 @@ void BuildAST(GQLParser::ResultContext* ctx, ast::Result& value) {
     value = ast::NullLiteral();
   } else {
     BuildAST(ctx->resultExpression()->valueExpression(),
-             *value.emplace<ast::ValueExpressionPtr>().get_or_create());
+             *value.emplace<ast::ValueExpressionPtr>());
   }
 }
 
@@ -1616,7 +1633,7 @@ void BuildAST(GQLParser::SimpleCaseContext* ctx, ast::SimpleCase& value) {
     BuildAST(ctx2, value.operand.emplace<ast::ElementVariableReference>());
   } else {
     BuildAST(ctx->caseOperand()->nonParenthesizedValueExpressionPrimary(),
-             *value.operand.emplace<ast::ValueExpressionPtr>().get_or_create());
+             *value.operand.emplace<ast::ValueExpressionPtr>());
   }
   for (auto when : ctx->simpleWhenClause()) {
     BuildAST(when, value.when.emplace_back());
@@ -1633,7 +1650,7 @@ void BuildAST(GQLParser::SearchedCaseContext* ctx, ast::SearchedCase& value) {
     AssignInputPosition(when, value2);
     BuildAST(
         when->searchCondition()->booleanValueExpression()->valueExpression(),
-        *value2.condition.get_or_create());
+        *value2.condition);
     BuildAST(when->result(), value2.result);
   }
   if (auto ctx2 = ctx->elseClause()) {
@@ -1647,14 +1664,14 @@ void BuildAST(GQLParser::CaseExpressionContext* ctx,
     if (auto ctx3 = dynamic_cast<GQLParser::NullIfExprAltContext*>(ctx2)) {
       auto& value2 = value.emplace<ast::NullIfCaseAbbreviation>();
       AssignInputPosition(ctx3, value2);
-      BuildAST(ctx3->valueExpression(0), *value2.first.get_or_create());
-      BuildAST(ctx3->valueExpression(1), *value2.second.get_or_create());
+      BuildAST(ctx3->valueExpression(0), *value2.first);
+      BuildAST(ctx3->valueExpression(1), *value2.second);
     } else {
       auto& value2 = value.emplace<ast::CoalesceCaseAbbreviation>();
       AssignInputPosition(ctx2, value2);
       for (auto expr : dynamic_cast<GQLParser::CoalesceExprAltContext*>(ctx2)
                            ->valueExpression()) {
-        BuildAST(expr, *value2.expressions.emplace_back().get_or_create());
+        BuildAST(expr, *value2.expressions.emplace_back());
       }
     }
   } else if (auto ctx2 = ctx->caseSpecification()) {
@@ -1681,11 +1698,11 @@ void ProcessNonParenthesizedValueExpressionPrimarySpecialCase(
   } else if (auto ctx2 = ctx->propertyName()) {
     auto& value2 = value.option.emplace<ast::PropertyReference>();
     AssignInputPosition(ctx, value2);
-    BuildAST(ctx->valueExpressionPrimary(), *value2.element.get_or_create());
+    BuildAST(ctx->valueExpressionPrimary(), *value2.element);
     BuildAST(ctx2->identifier(), value2.property);
   } else if (auto ctx2 = ctx->valueQueryExpression()) {
     BuildAST(ctx2->nestedQuerySpecification()->procedureBody(),
-             *value.option.emplace<ast::ProcedureBodyPtr>().get_or_create());
+             *value.option.emplace<ast::ProcedureBodyPtr>());
   } else if (auto ctx2 = ctx->caseExpression()) {
     BuildAST(ctx2, value.option.emplace<ast::CaseExpression>());
   } else if (auto ctx2 = ctx->castSpecification()) {
@@ -1726,12 +1743,12 @@ void BuildAST(GQLParser::DatetimeSubtractionContext* ctx,
                ->datetimeValueExpression1()
                ->datetimeValueExpression()
                ->valueExpression(),
-           *value.param1.get_or_create());
+           *value.param1);
   BuildAST(ctx->datetimeSubtractionParameters()
                ->datetimeValueExpression2()
                ->datetimeValueExpression()
                ->valueExpression(),
-           *value.param2.get_or_create());
+           *value.param2);
   if (auto ctx2 = ctx->temporalDurationQualifier()) {
     value.qualifier = ctx2->YEAR() != nullptr
                           ? ast::TemporalDurationQualifier::YearToMonth
@@ -1810,27 +1827,24 @@ void BuildAST(GQLParser::DatetimeValueFunctionContext* ctx,
 void BuildAST(GQLParser::TrimListFunctionContext* ctx,
               ast::ValueExpression::Binary& value) {
   value.op = ast::ValueExpression::Binary::Op::TrimList;
-  BuildAST(ctx->listValueExpression()->valueExpression(),
-           *value.left.get_or_create());
-  BuildAST(ctx->numericValueExpression(), *value.right.get_or_create());
+  BuildAST(ctx->listValueExpression()->valueExpression(), *value.left);
+  BuildAST(ctx->numericValueExpression(), *value.right);
 }
 
 void BuildAST(GQLParser::ElementsFunctionContext* ctx,
               ast::ValueExpression::Unary& value) {
   value.op = ast::ValueExpression::Unary::Op::Elements;
-  BuildAST(ctx->pathValueExpression()->valueExpression(),
-           *value.expr.get_or_create());
+  BuildAST(ctx->pathValueExpression()->valueExpression(), *value.expr);
 }
 
 void BuildAST(GQLParser::CardinalityExpressionContext* ctx,
               ast::ValueExpression::Unary& value) {
   if (auto ctx2 = ctx->cardinalityExpressionArgument()) {
     value.op = ast::ValueExpression::Unary::Op::Cardinality;
-    BuildAST(ctx2->valueExpression(), *value.expr.get_or_create());
+    BuildAST(ctx2->valueExpression(), *value.expr);
   } else {
     value.op = ast::ValueExpression::Unary::Op::Size;
-    BuildAST(ctx->listValueExpression()->valueExpression(),
-             *value.expr.get_or_create());
+    BuildAST(ctx->listValueExpression()->valueExpression(), *value.expr);
   }
 }
 
@@ -1840,9 +1854,8 @@ void BuildAST(GQLParser::SubCharacterOrByteStringContext* ctx,
   value.direction = ctx->LEFT() != nullptr
                         ? ast::SubCharacterOrByteString::Direction::Left
                         : ast::SubCharacterOrByteString::Direction::Right;
-  BuildAST(ctx->valueExpression(), *value.expr.get_or_create());
-  BuildAST(ctx->stringLength()->numericValueExpression(),
-           *value.length.get_or_create());
+  BuildAST(ctx->valueExpression(), *value.expr);
+  BuildAST(ctx->stringLength()->numericValueExpression(), *value.length);
 }
 
 void BuildAST(GQLParser::TrimSingleCharacterOrByteStringContext* ctx,
@@ -1859,11 +1872,10 @@ void BuildAST(GQLParser::TrimSingleCharacterOrByteStringContext* ctx,
     }
   }
   if (auto ctx3 = trimCtx->trimCharacterOrByteString()) {
-    BuildAST(ctx3->valueExpression(),
-             *value.trimString.emplace().get_or_create());
+    BuildAST(ctx3->valueExpression(), *value.trimString.emplace());
   }
   BuildAST(trimCtx->trimCharacterOrByteStringSource()->valueExpression(),
-           *value.source.get_or_create());
+           *value.source);
 }
 
 void BuildAST(GQLParser::FoldCharacterStringContext* ctx,
@@ -1871,7 +1883,7 @@ void BuildAST(GQLParser::FoldCharacterStringContext* ctx,
   AssignInputPosition(ctx, value);
   value.case_ = ctx->UPPER() != nullptr ? ast::FoldCharacterString::Case::Upper
                                         : ast::FoldCharacterString::Case::Lower;
-  BuildAST(ctx->valueExpression(), *value.expr.get_or_create());
+  BuildAST(ctx->valueExpression(), *value.expr);
 }
 
 void BuildAST(GQLParser::TrimMultiCharacterCharacterStringContext* ctx,
@@ -1884,16 +1896,16 @@ void BuildAST(GQLParser::TrimMultiCharacterCharacterStringContext* ctx,
   } else {
     value.type = ast::TrimMultiCharacterCharacterString::TrimType::RTrim;
   }
-  BuildAST(ctx->valueExpression(0), *value.source.get_or_create());
+  BuildAST(ctx->valueExpression(0), *value.source);
   if (auto ctx2 = ctx->valueExpression(1)) {
-    BuildAST(ctx2, *value.trimString.emplace().get_or_create());
+    BuildAST(ctx2, *value.trimString.emplace());
   }
 }
 
 void BuildAST(GQLParser::NormalizeCharacterStringContext* ctx,
               ast::NormalizeCharacterString& value) {
   AssignInputPosition(ctx, value);
-  BuildAST(ctx->valueExpression(), *value.expr.get_or_create());
+  BuildAST(ctx->valueExpression(), *value.expr);
   if (auto ctx2 = ctx->normalForm()) {
     BuildAST(ctx2, value.form);
   }
@@ -1942,7 +1954,7 @@ void BuildAST(GQLParser::TrigonometricFunctionContext* ctx,
   } else if (name->RADIANS() != nullptr) {
     value.op = ast::ValueExpression::Unary::Op::Radians;
   }
-  BuildAST(ctx->numericValueExpression(), *value.expr.get_or_create());
+  BuildAST(ctx->numericValueExpression(), *value.expr);
 }
 
 void BuildAST(GQLParser::NumericValueFunctionContext* ctx,
@@ -1953,71 +1965,71 @@ void BuildAST(GQLParser::NumericValueFunctionContext* ctx,
     if (auto ctx3 = ctx2->charLengthExpression()) {
       value2.op = ast::ValueExpression::Unary::Op::CharLength;
       BuildAST(ctx3->characterStringValueExpression()->valueExpression(),
-               *value2.expr.get_or_create());
+               *value2.expr);
     } else if (auto ctx3 = ctx2->byteLengthExpression()) {
       value2.op = ast::ValueExpression::Unary::Op::ByteLength;
       BuildAST(ctx3->byteStringValueExpression()->valueExpression(),
-               *value2.expr.get_or_create());
+               *value2.expr);
     } else {
       value2.op = ast::ValueExpression::Unary::Op::PathLength;
       BuildAST(ctx2->pathLengthExpression()
                    ->pathValueExpression()
                    ->valueExpression(),
-               *value2.expr.get_or_create());
+               *value2.expr);
     }
   } else if (auto ctx2 = ctx->cardinalityExpression()) {
     BuildAST(ctx2, value.option.emplace<ast::ValueExpression::Unary>());
   } else if (auto ctx2 = ctx->absoluteValueExpression()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::AbsoluteValue;
-    BuildAST(ctx2->valueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->valueExpression(), *value2.expr);
   } else if (auto ctx2 = ctx->modulusExpression()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
     value2.op = ast::ValueExpression::Binary::Op::Modulus;
     BuildAST(ctx2->numericValueExpressionDividend()->numericValueExpression(),
-             *value2.left.get_or_create());
+             *value2.left);
     BuildAST(ctx2->numericValueExpressionDivisor()->numericValueExpression(),
-             *value2.right.get_or_create());
+             *value2.right);
   } else if (auto ctx2 = ctx->trigonometricFunction()) {
     BuildAST(ctx2, value.option.emplace<ast::ValueExpression::Unary>());
   } else if (auto ctx2 = ctx->generalLogarithmFunction()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
     value2.op = ast::ValueExpression::Binary::Op::GeneralLogarithm;
     BuildAST(ctx2->generalLogarithmBase()->numericValueExpression(),
-             *value2.left.get_or_create());
+             *value2.left);
     BuildAST(ctx2->generalLogarithmArgument()->numericValueExpression(),
-             *value2.right.get_or_create());
+             *value2.right);
   } else if (auto ctx2 = ctx->commonLogarithm()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::CommonLogarithm;
-    BuildAST(ctx2->numericValueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->numericValueExpression(), *value2.expr);
   } else if (auto ctx2 = ctx->naturalLogarithm()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::NaturalLogarithm;
-    BuildAST(ctx2->numericValueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->numericValueExpression(), *value2.expr);
   } else if (auto ctx2 = ctx->exponentialFunction()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::Exponential;
-    BuildAST(ctx2->numericValueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->numericValueExpression(), *value2.expr);
   } else if (auto ctx2 = ctx->powerFunction()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
     value2.op = ast::ValueExpression::Binary::Op::Power;
     BuildAST(ctx2->numericValueExpressionBase()->numericValueExpression(),
-             *value2.left.get_or_create());
+             *value2.left);
     BuildAST(ctx2->numericValueExpressionExponent()->numericValueExpression(),
-             *value2.right.get_or_create());
+             *value2.right);
   } else if (auto ctx2 = ctx->squareRoot()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::SquareRoot;
-    BuildAST(ctx2->numericValueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->numericValueExpression(), *value2.expr);
   } else if (auto ctx2 = ctx->floorFunction()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::Floor;
-    BuildAST(ctx2->numericValueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->numericValueExpression(), *value2.expr);
   } else if (auto ctx2 = ctx->ceilingFunction()) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::Ceiling;
-    BuildAST(ctx2->numericValueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->numericValueExpression(), *value2.expr);
   } else {
     GQL_ASSERT(false);
   }
@@ -2042,8 +2054,7 @@ void BuildAST(GQLParser::DurationValueFunctionContext* ctx,
   } else {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     value2.op = ast::ValueExpression::Unary::Op::AbsoluteValue;
-    BuildAST(ctx->absoluteValueExpression()->valueExpression(),
-             *value2.expr.get_or_create());
+    BuildAST(ctx->absoluteValueExpression()->valueExpression(), *value2.expr);
   }
 }
 void BuildAST(GQLParser::ValueFunctionContext* ctx,
@@ -2079,12 +2090,11 @@ void BuildAST(GQLParser::GraphExpressionContext* ctx,
   if (auto ctx2 = ctx->graphReference()) {
     BuildAST(ctx2, value.option.emplace<ast::GraphReference>());
   } else if (auto ctx2 = ctx->objectExpressionPrimary()) {
-    BuildAST(ctx2,
-             *value.option.emplace<ast::ValueExpressionPtr>().get_or_create());
+    BuildAST(ctx2, *value.option.emplace<ast::ValueExpressionPtr>());
   } else if (auto ctx2 = ctx->objectNameOrBindingVariable()) {
     BuildAST(ctx2->regularIdentifier(),
              value.option.emplace<ast::ObjectNameOrBindingVariable>());
-  } else if (auto ctx2 = ctx->currentGraph()) {
+  } else if (ctx->currentGraph()) {
     value.option.emplace<ast::CurrentGraph>();
   } else {
     GQL_ASSERT(false);
@@ -2095,15 +2105,12 @@ void BuildAST(GQLParser::ExistsPredicateContext* ctx,
               ast::ExistsPredicate& value) {
   AssignInputPosition(ctx, value);
   if (auto ctx2 = ctx->graphPattern()) {
-    BuildAST(ctx2,
-             *value.option.emplace<ast::GraphPatternPtr>().get_or_create());
+    BuildAST(ctx2, *value.option.emplace<ast::GraphPatternPtr>());
   } else if (auto ctx2 = ctx->matchStatementBlock()) {
-    BuildAST(
-        ctx2,
-        *value.option.emplace<ast::MatchStatementBlockPtr>().get_or_create());
+    BuildAST(ctx2, *value.option.emplace<ast::MatchStatementBlockPtr>());
   } else if (auto ctx2 = ctx->nestedQuerySpecification()) {
     BuildAST(ctx2->procedureBody(),
-             *value.option.emplace<ast::ProcedureBodyPtr>().get_or_create());
+             *value.option.emplace<ast::ProcedureBodyPtr>());
   } else {
     GQL_ASSERT(false);
   }
@@ -2111,14 +2118,14 @@ void BuildAST(GQLParser::ExistsPredicateContext* ctx,
 
 void BuildAST(GQLParser::NullPredicateContext* ctx, ast::NullPredicate& value) {
   AssignInputPosition(ctx, value);
-  BuildAST(ctx->valueExpressionPrimary(), *value.expr.get_or_create());
+  BuildAST(ctx->valueExpressionPrimary(), *value.expr);
   value.isNot = ctx->nullPredicatePart2()->NOT() != nullptr;
 }
 
 void BuildAST(GQLParser::ValueTypePredicateContext* ctx,
               ast::ValueTypePredicate& value) {
   AssignInputPosition(ctx, value);
-  BuildAST(ctx->valueExpressionPrimary(), *value.expr.get_or_create());
+  BuildAST(ctx->valueExpressionPrimary(), *value.expr);
   BuildAST(ctx->valueTypePredicatePart2()->valueType(), value.type);
   value.isNot = ctx->valueTypePredicatePart2()->NOT() != nullptr;
 }
@@ -2209,36 +2216,36 @@ void BuildAST(GQLParser::ValueExpressionContext* ctx,
   AssignInputPosition(ctx, value);
   if (auto ctx2 = dynamic_cast<GQLParser::SignedExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
-    BuildAST(ctx2->valueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->valueExpression(), *value2.expr);
     value2.op = (ctx2->PLUS_SIGN() != nullptr)
                     ? ast::ValueExpression::Unary::Op::Positive
                     : ast::ValueExpression::Unary::Op::Negative;
   } else if (auto ctx2 = dynamic_cast<GQLParser::MultDivExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
-    BuildAST(ctx2->valueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->valueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->valueExpression(0), *value2.left);
+    BuildAST(ctx2->valueExpression(1), *value2.right);
     value2.op = (ctx2->ASTERISK() != nullptr)
                     ? ast::ValueExpression::Binary::Op::Multiply
                     : ast::ValueExpression::Binary::Op::Divide;
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::AddSubtractExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
-    BuildAST(ctx2->valueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->valueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->valueExpression(0), *value2.left);
+    BuildAST(ctx2->valueExpression(1), *value2.right);
     value2.op = (ctx2->PLUS_SIGN() != nullptr)
                     ? ast::ValueExpression::Binary::Op::Add
                     : ast::ValueExpression::Binary::Op::Subtract;
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ConcatenationExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
-    BuildAST(ctx2->valueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->valueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->valueExpression(0), *value2.left);
+    BuildAST(ctx2->valueExpression(1), *value2.right);
     value2.op = ast::ValueExpression::Binary::Op::Concatenate;
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ComparisonExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Comparison>();
-    BuildAST(ctx2->valueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->valueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->valueExpression(0), *value2.left);
+    BuildAST(ctx2->valueExpression(1), *value2.right);
     BuildAST(ctx2->compOp(), value2.op);
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::PredicateExprAltContext*>(ctx)) {
@@ -2248,10 +2255,10 @@ void BuildAST(GQLParser::ValueExpressionContext* ctx,
                      ctx)) {
     auto& value2 = value.option.emplace<ast::NormalizedPredicate>();
     BuildAST(ctx2->normalizedPredicatePart2(), value2);
-    BuildAST(ctx2->valueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->valueExpression(), *value2.expr);
   } else if (auto ctx2 = dynamic_cast<GQLParser::IsNotExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Is>();
-    BuildAST(ctx2->valueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->valueExpression(), *value2.expr);
     value2.isNot = ctx2->NOT() != nullptr;
     auto truthValue = ctx2->truthValue()->BOOLEAN_LITERAL()->getText();
     if (truthValue == "TRUE") {
@@ -2263,19 +2270,19 @@ void BuildAST(GQLParser::ValueExpressionContext* ctx,
     }
   } else if (auto ctx2 = dynamic_cast<GQLParser::NotExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
-    BuildAST(ctx2->valueExpression(), *value2.expr.get_or_create());
+    BuildAST(ctx2->valueExpression(), *value2.expr);
     value2.op = ast::ValueExpression::Unary::Op::BoolNot;
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ConjunctiveExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
-    BuildAST(ctx2->valueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->valueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->valueExpression(0), *value2.left);
+    BuildAST(ctx2->valueExpression(1), *value2.right);
     value2.op = ast::ValueExpression::Binary::Op::BoolAnd;
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::DisjunctiveExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Binary>();
-    BuildAST(ctx2->valueExpression(0), *value2.left.get_or_create());
-    BuildAST(ctx2->valueExpression(1), *value2.right.get_or_create());
+    BuildAST(ctx2->valueExpression(0), *value2.left);
+    BuildAST(ctx2->valueExpression(1), *value2.right);
     value2.op = (ctx2->OR() != nullptr)
                     ? ast::ValueExpression::Binary::Op::BoolOr
                     : ast::ValueExpression::Binary::Op::BoolXor;
@@ -2317,21 +2324,33 @@ void BuildAST(GQLParser::ElementPatternFillerContext* ctx,
               ast::ElementPatternFiller& value) {
   AssignInputPosition(ctx, value);
   if (auto ctx2 = ctx->elementVariableDeclaration()) {
-    auto& value2 = value.varDecl.emplace();
+    auto& value2 = value.var.emplace();
     AssignInputPosition(ctx2, value2);
-    BuildAST(ctx2->elementVariable()->bindingVariable(), value2.name);
+    BuildAST(ctx2->elementVariable()->bindingVariable(), value2);
   }
   if (auto ctx2 = ctx->isLabelExpression()) {
     BuildAST(ctx2->labelExpression(), value.labelExpr.emplace());
   }
   if (auto ctx2 = ctx->elementPatternPredicate()) {
     if (auto ctx3 = ctx2->elementPatternWhereClause()) {
+      if (!value.var) {
+        // 16.7.21 If an <element pattern> EP that contains an <element pattern
+        // where clause> EPWC, then EP shall simply contain an <element variable
+        // declaration> GPVD.
+        auto token = ctx3->getStart();
+        throw SyntaxRuleError(
+            {token->getLine(), token->getCharPositionInLine()},
+            ErrorCode::E0084,
+            "Element pattern containing WHERE clause must "
+            "contain an element variable declaration");
+      }
+
       auto& value2 =
           value.predicate.emplace().emplace<ast::ElementPatternWhereClause>();
       AssignInputPosition(ctx3, value2);
       BuildAST(
           ctx3->searchCondition()->booleanValueExpression()->valueExpression(),
-          *value2.condition.get_or_create());
+          *value2.condition);
     } else {
       auto& value2 = value.predicate.emplace()
                          .emplace<ast::ElementPropertySpecification>();
@@ -2434,13 +2453,13 @@ void BuildAST(GQLParser::SimplifiedFactorHighContext* ctx,
               ast::SimplifiedFactorHigh& value) {
   AssignInputPosition(ctx, value);
   if (auto ctx2 = ctx->simplifiedTertiary()) {
-    BuildAST(ctx2, *value.tertiary.get_or_create());
+    BuildAST(ctx2, *value.tertiary);
   } else if (auto ctx2 = ctx->simplifiedQuantified()) {
-    BuildAST(ctx2->simplifiedTertiary(), *value.tertiary.get_or_create());
+    BuildAST(ctx2->simplifiedTertiary(), *value.tertiary);
     BuildAST(ctx2->graphPatternQuantifier(),
              value.quantifier.emplace<ast::GraphPatternQuantifier>());
   } else if (auto ctx2 = ctx->simplifiedQuestioned()) {
-    BuildAST(ctx2->simplifiedTertiary(), *value.tertiary.get_or_create());
+    BuildAST(ctx2->simplifiedTertiary(), *value.tertiary);
     value.quantifier = ast::SimplifiedFactorHigh::Optional{};
   }
 }
@@ -2577,8 +2596,7 @@ void BuildAST(GQLParser::PathPrimaryContext* ctx, ast::PathPrimary& value) {
                  GQLParser::PpParenthesizedPathPatternExpressionContext*>(
                  ctx)) {
     BuildAST(ctx2->parenthesizedPathPatternExpression(),
-             *value.emplace<ast::ParenthesizedPathPatternExpressionPtr>()
-                  .get_or_create());
+             *value.emplace<ast::ParenthesizedPathPatternExpressionPtr>());
   } else if (auto ctx2 = dynamic_cast<
                  GQLParser::PpSimplifiedPathPatternExpressionContext*>(ctx)) {
     BuildAST(ctx2->simplifiedPathPatternExpression(),
@@ -2635,8 +2653,7 @@ void BuildAST(GQLParser::ParenthesizedPathPatternExpressionContext* ctx,
               ast::ParenthesizedPathPatternExpression& value) {
   AssignInputPosition(ctx, value);
   if (auto ctx2 = ctx->subpathVariableDeclaration()) {
-    BuildAST(ctx2->subpathVariable()->regularIdentifier(),
-             value.varDecl.emplace());
+    BuildAST(ctx2->subpathVariable()->regularIdentifier(), value.var.emplace());
   }
   if (auto ctx2 = ctx->pathModePrefix()) {
     BuildAST(ctx2->pathMode(), value.pathMode);
@@ -2645,7 +2662,7 @@ void BuildAST(GQLParser::ParenthesizedPathPatternExpressionContext* ctx,
   if (auto ctx2 = ctx->parenthesizedPathPatternWhereClause()) {
     BuildAST(
         ctx2->searchCondition()->booleanValueExpression()->valueExpression(),
-        *value.where.emplace().get_or_create());
+        *value.where.emplace());
   }
 }
 
@@ -2665,43 +2682,44 @@ void BuildAST(GQLParser::PathPatternPrefixContext* ctx,
   if (auto ctx2 = ctx->pathModePrefix()) {
     BuildAST(ctx2->pathMode(), value.mode);
   } else if (auto ctx2 = ctx->pathSearchPrefix()) {
+    auto& pathSearch = value.pathSearchPrefix.emplace();
     if (auto ctx3 = ctx2->allPathSearch()) {
-      value.search = ast::PathPatternPrefix::Search::All;
+      pathSearch.search = ast::PathSearchPrefix::Search::All;
       if (auto ctx4 = ctx3->pathMode()) {
         BuildAST(ctx4, value.mode);
       }
     } else if (auto ctx3 = ctx2->anyPathSearch()) {
-      value.search = ast::PathPatternPrefix::Search::Any;
+      pathSearch.search = ast::PathSearchPrefix::Search::Any;
       if (auto ctx4 = ctx3->numberOfPaths()) {
-        BuildAST(ctx4->nonNegativeIntegerSpecification(), value.number);
+        BuildAST(ctx4->nonNegativeIntegerSpecification(), pathSearch.number);
       }
       if (auto ctx4 = ctx3->pathMode()) {
         BuildAST(ctx4, value.mode);
       }
     } else if (auto ctx3 = ctx2->shortestPathSearch()) {
       if (auto ctx4 = ctx3->allShortestPathSearch()) {
-        value.search = ast::PathPatternPrefix::Search::CountedShortestGroup;
-        value.number = 1u;
+        pathSearch.search = ast::PathSearchPrefix::Search::CountedShortestGroup;
+        pathSearch.number = 1u;
         if (auto ctx5 = ctx4->pathMode()) {
           BuildAST(ctx5, value.mode);
         }
       } else if (auto ctx4 = ctx3->anyShortestPathSearch()) {
-        value.search = ast::PathPatternPrefix::Search::CountedShortestPath;
-        value.number = 1u;
+        pathSearch.search = ast::PathSearchPrefix::Search::CountedShortestPath;
+        pathSearch.number = 1u;
         if (auto ctx5 = ctx4->pathMode()) {
           BuildAST(ctx5, value.mode);
         }
       } else if (auto ctx4 = ctx3->countedShortestPathSearch()) {
-        value.search = ast::PathPatternPrefix::Search::CountedShortestPath;
+        pathSearch.search = ast::PathSearchPrefix::Search::CountedShortestPath;
         BuildAST(ctx4->numberOfPaths()->nonNegativeIntegerSpecification(),
-                 value.number);
+                 pathSearch.number);
         if (auto ctx5 = ctx4->pathMode()) {
           BuildAST(ctx5, value.mode);
         }
       } else if (auto ctx4 = ctx3->countedShortestGroupSearch()) {
-        value.search = ast::PathPatternPrefix::Search::CountedShortestGroup;
+        pathSearch.search = ast::PathSearchPrefix::Search::CountedShortestGroup;
         if (auto ctx5 = ctx4->numberOfGroups()) {
-          BuildAST(ctx5->nonNegativeIntegerSpecification(), value.number);
+          BuildAST(ctx5->nonNegativeIntegerSpecification(), pathSearch.number);
         }
         if (auto ctx5 = ctx4->pathMode()) {
           BuildAST(ctx5, value.mode);
@@ -2741,7 +2759,7 @@ void BuildAST(GQLParser::GraphPatternContext* ctx, ast::GraphPattern& value) {
   if (auto ctx2 = ctx->graphPatternWhereClause()) {
     BuildAST(
         ctx2->searchCondition()->booleanValueExpression()->valueExpression(),
-        *value.where.emplace().get_or_create());
+        *value.where.emplace());
   }
 }
 
@@ -2751,10 +2769,11 @@ void BuildAST(GQLParser::SimpleMatchStatementContext* ctx,
   auto ctx2 = ctx->graphPatternBindingTable();
   BuildAST(ctx2->graphPattern(), value.pattern);
   if (auto ctx3 = ctx2->graphPatternYieldClause()) {
+    auto& yield = value.yield.emplace();
     auto ctx4 = ctx3->graphPatternYieldItemList();
     for (auto ctx5 : ctx4->graphPatternYieldItem()) {
       BuildAST(ctx5->bindingVariableReference()->bindingVariable(),
-               value.yield.emplace_back());
+               yield.emplace_back());
     }
   }
 }
@@ -2763,8 +2782,6 @@ void BuildAST(GQLParser::OptionalMatchStatementContext* ctx,
               ast::OptionalMatchStatement& value) {
   AssignInputPosition(ctx, value);
   auto ctx2 = ctx->optionalOperand();
-  value.statements = ast::make_copyable<ast::MatchStatementBlock>();
-
   if (auto ctx3 = ctx2->simpleMatchStatement()) {
     BuildAST(ctx3, value.statements->statements.emplace_back()
                        .emplace<ast::SimpleMatchStatement>());
@@ -2901,16 +2918,17 @@ void BuildAST(GQLParser::CallProcedureStatementContext* ctx,
     auto& value2 = value.call.emplace<ast::InlineProcedureCall>();
     AssignInputPosition(ctx3, value2);
     if (auto ctx4 = ctx3->variableScopeClause()) {
+      auto& value3 = value2.vars.emplace();
       if (auto ctx5 = ctx4->bindingVariableReferenceList()) {
         for (auto ctx6 : ctx5->bindingVariableReference()) {
-          BuildAST(ctx6->bindingVariable(), value2.vars.emplace_back());
+          BuildAST(ctx6->bindingVariable(), value3.emplace_back());
         }
       }
     }
     BuildAST(ctx3->nestedProcedureSpecification()
                  ->procedureSpecification()
                  ->procedureBody(),
-             *value2.spec.get_or_create());
+             *value2.spec);
   } else if (auto ctx3 = ctx2->namedProcedureCall()) {
     auto& value2 = value.call.emplace<ast::NamedProcedureCall>();
     AssignInputPosition(ctx3, value2);
@@ -2982,8 +3000,7 @@ void BuildAST(GQLParser::OptTypedValueInitializerContext* ctx,
   if (auto ctx2 = ctx->valueType()) {
     BuildAST(ctx2, value.type.emplace());
   }
-  BuildAST(ctx->valueInitializer()->valueExpression(),
-           *value.initializer.get_or_create());
+  BuildAST(ctx->valueInitializer()->valueExpression(), *value.initializer);
 }
 
 void BuildAST(GQLParser::ValueVariableDefinitionContext* ctx,
@@ -3025,10 +3042,10 @@ void BuildAST(GQLParser::ProcedureBodyContext* ctx, ast::ProcedureBody& value) {
   }
   auto ctx2 = ctx->statementBlock();
   AssignInputPosition(ctx2, value.statements);
-  BuildAST(ctx2->statement(), *value.statements.firstStatement.get_or_create());
+  BuildAST(ctx2->statement(), *value.statements.firstStatement);
   for (auto ctx3 : ctx2->nextStatement()) {
     auto& nextStatement = value.statements.nextStatements.emplace_back();
-    BuildAST(ctx3->statement(), *nextStatement.statement.get_or_create());
+    BuildAST(ctx3->statement(), *nextStatement.statement);
     if (auto ctx4 = ctx3->yieldClause()) {
       BuildAST(ctx4, nextStatement.yield);
     }
@@ -3087,6 +3104,13 @@ void BuildAST(GQLParser::ReturnItemContext* ctx, ast::ReturnItem& value) {
            value.aggregate);
   if (auto ctx2 = ctx->returnItemAlias()) {
     BuildAST(ctx2->identifier(), value.alias.emplace());
+  } else {
+    if (!std::holds_alternative<ast::BindingVariableReference>(
+            value.aggregate.option)) {
+      auto token = ctx->getStart();
+      throw SyntaxRuleError({token->getLine(), token->getCharPositionInLine()},
+                            ErrorCode::E0085, "Return item must have an alias");
+    }
   }
 }
 
@@ -3139,6 +3163,14 @@ void BuildAST(GQLParser::SelectItemListContext* ctx,
              value2.expr);
     if (auto ctx3 = ctx2->selectItemAlias()) {
       BuildAST(ctx3->identifier(), value2.alias.emplace());
+    } else {
+      if (!std::holds_alternative<ast::BindingVariableReference>(
+              value2.expr.option)) {
+        auto token = ctx2->getStart();
+        throw SyntaxRuleError(
+            {token->getLine(), token->getCharPositionInLine()},
+            ErrorCode::E0086, "Select item must have an alias");
+      }
     }
   }
 }
@@ -3190,7 +3222,7 @@ void BuildAST(GQLParser::SelectStatementContext* ctx,
   if (auto ctx2 = ctx->whereClause()) {
     BuildAST(
         ctx2->searchCondition()->booleanValueExpression()->valueExpression(),
-        *value.where.emplace().get_or_create());
+        *value.where.emplace());
   }
   if (auto ctx2 = ctx->groupByClause()) {
     BuildAST(ctx2, value.groupBy);
@@ -3198,7 +3230,7 @@ void BuildAST(GQLParser::SelectStatementContext* ctx,
   if (auto ctx2 = ctx->havingClause()) {
     BuildAST(
         ctx2->searchCondition()->booleanValueExpression()->valueExpression(),
-        *value.having.emplace().get_or_create());
+        *value.having.emplace());
   }
   if (auto ctx2 = ctx->orderByClause()) {
     BuildAST(ctx2, value.orderBy);
@@ -3217,11 +3249,11 @@ void BuildAST(GQLParser::FilterStatementContext* ctx,
   if (auto ctx2 = ctx->whereClause()) {
     BuildAST(
         ctx2->searchCondition()->booleanValueExpression()->valueExpression(),
-        *value.condition.get_or_create());
+        *value.condition);
   } else {
     BuildAST(
         ctx->searchCondition()->booleanValueExpression()->valueExpression(),
-        *value.condition.get_or_create());
+        *value.condition);
   }
 }
 
@@ -3265,21 +3297,23 @@ void BuildAST(GQLParser::FocusedLinearQueryStatementContext* ctx,
   if (auto ctx2 = ctx->focusedLinearQueryAndPrimitiveResultStatementPart()) {
     auto& value2 = value.emplace<ast::LinearQueryStatementOption>();
     AssignInputPosition(ctx, value2);
+    auto& value3 =
+        value2.statements
+            .emplace<std::vector<ast::FocusedLinearQueryStatementPart>>();
     for (auto ctx3 : ctx->focusedLinearQueryStatementPart()) {
-      auto& value3 = value2.queries.emplace_back();
-      AssignInputPosition(ctx3, value3);
-      BuildAST(ctx3->useGraphClause()->graphExpression(), value3.useGraph);
-      BuildAST(ctx3->simpleLinearQueryStatement(), value3.statements);
+      auto& value4 = value3.emplace_back();
+      AssignInputPosition(ctx3, value4);
+      BuildAST(ctx3->useGraphClause()->graphExpression(), value4.useGraph);
+      BuildAST(ctx3->simpleLinearQueryStatement(), value4.statements);
     }
-    BuildAST(ctx2->useGraphClause()->graphExpression(),
-             value2.useGraph.emplace());
-    BuildAST(ctx2->simpleLinearQueryStatement(), value2.statements);
+    auto& value5 = value3.emplace_back();
+    BuildAST(ctx2->useGraphClause()->graphExpression(), value5.useGraph);
+    BuildAST(ctx2->simpleLinearQueryStatement(), value5.statements);
     BuildAST(ctx2->primitiveResultStatement(), value2.result);
   } else if (auto ctx2 = ctx->focusedPrimitiveResultStatement()) {
-    auto& value2 = value.emplace<ast::LinearQueryStatementOption>();
+    auto& value2 = value.emplace<ast::FocusedPrimitiveResultStatement>();
     AssignInputPosition(ctx2, value2);
-    BuildAST(ctx2->useGraphClause()->graphExpression(),
-             value2.useGraph.emplace());
+    BuildAST(ctx2->useGraphClause()->graphExpression(), value2.useGraph);
     BuildAST(ctx2->primitiveResultStatement(), value2.result);
   } else if (auto ctx2 = ctx->focusedNestedQuerySpecification()) {
     auto& value2 = value.emplace<ast::NestedQuerySpecification>();
@@ -3293,25 +3327,22 @@ void BuildAST(GQLParser::FocusedLinearQueryStatementContext* ctx,
   }
 }
 
-void BuildAST(GQLParser::LinearQueryStatementContext* ctx,
+void BuildAST(GQLParser::AmbientLinearQueryStatementContext* ctx3,
               ast::LinearQueryStatement& value) {
-  if (auto ctx2 = ctx->focusedLinearQueryStatement()) {
-    BuildAST(ctx2, value);
+  if (auto ctx4 = ctx3->primitiveResultStatement()) {
+    auto& value2 = value.emplace<ast::LinearQueryStatementOption>();
+    AssignInputPosition(ctx3, value2);
+    auto& value3 = value2.statements.emplace<ast::SimpleLinearQueryStatement>();
+    BuildAST(ctx4, value2.result);
+    if (auto ctx5 = ctx3->simpleLinearQueryStatement()) {
+      BuildAST(ctx5, value3);
+    }
+  } else if (auto ctx4 = ctx3->nestedQuerySpecification()) {
+    auto& value2 = value.emplace<ast::NestedQuerySpecification>();
+    AssignInputPosition(ctx4, value2);
+    BuildAST(ctx4->procedureBody(), value2.procedure);
   } else {
-    auto ctx3 = ctx->ambientLinearQueryStatement();
-    if (auto ctx4 = ctx3->primitiveResultStatement()) {
-      auto& value2 = value.emplace<ast::LinearQueryStatementOption>();
-      AssignInputPosition(ctx3, value2);
-      BuildAST(ctx4, value2.result);
-      if (auto ctx4 = ctx3->simpleLinearQueryStatement()) {
-        BuildAST(ctx4, value2.statements);
-      }
-    }
-    if (auto ctx4 = ctx3->nestedQuerySpecification()) {
-      auto& value2 = value.emplace<ast::NestedQuerySpecification>();
-      AssignInputPosition(ctx4, value2);
-      BuildAST(ctx4->procedureBody(), value2.procedure);
-    }
+    GQL_ASSERT(false);
   }
 }
 
@@ -3335,18 +3366,72 @@ void BuildAST(GQLParser::QueryConjunctionContext* ctx,
   }
 }
 
+namespace {
+bool IsQueryConjunctionsEqual(const ast::QueryConjunction& a,
+                              const ast::QueryConjunction& b) {
+  if (a.index() != b.index()) {
+    return false;
+  }
+  if (auto a2 = std::get_if<ast::SetOperator>(&a)) {
+    auto b2 = std::get_if<ast::SetOperator>(&b);
+    if (a2->kind != b2->kind) {
+      return false;
+    }
+    if (a2->quantifier != b2->quantifier) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
+void BuildAST(GQLParser::CompositeQueryExpressionFocusedContext* ctx,
+              ast::CompositeQueryExpression& value) {
+  if (auto ctx2 = ctx->compositeQueryExpressionFocused()) {
+    BuildAST(ctx2, value);
+    ast::QueryConjunction conjunction;
+    BuildAST(ctx->queryConjunction(), conjunction);
+    if (value.queries.empty()) {
+      value.conjunction = std::move(conjunction);
+    } else {
+      if (!IsQueryConjunctionsEqual(conjunction, value.conjunction)) {
+        auto token = ctx->queryConjunction()->getStart();
+        throw SyntaxRuleError(
+            {token->getLine(), token->getCharPositionInLine()},
+            ErrorCode::E0087, "Every query conjunction must be the same");
+      }
+    }
+  }
+  BuildAST(ctx->focusedLinearQueryStatement(), value.queries.emplace_back());
+}
+
+void BuildAST(GQLParser::CompositeQueryExpressionAmbientContext* ctx,
+              ast::CompositeQueryExpression& value) {
+  if (auto ctx2 = ctx->compositeQueryExpressionAmbient()) {
+    BuildAST(ctx2, value);
+    ast::QueryConjunction conjunction;
+    BuildAST(ctx->queryConjunction(), conjunction);
+    if (value.queries.empty()) {
+      value.conjunction = std::move(conjunction);
+    } else {
+      if (!IsQueryConjunctionsEqual(conjunction, value.conjunction)) {
+        auto token = ctx->queryConjunction()->getStart();
+        throw SyntaxRuleError(
+            {token->getLine(), token->getCharPositionInLine()},
+            ErrorCode::E0088, "Every query conjunction must be the same");
+      }
+    }
+  }
+  BuildAST(ctx->ambientLinearQueryStatement(), value.queries.emplace_back());
+}
+
 void BuildAST(GQLParser::CompositeQueryExpressionContext* ctx,
               ast::CompositeQueryExpression& value) {
   AssignInputPosition(ctx, value);
-  if (auto ctx2 = ctx->compositeQueryExpression()) {
+  if (auto ctx2 = ctx->compositeQueryExpressionFocused()) {
     BuildAST(ctx2, value);
-    BuildAST(ctx->queryConjunction(),
-             value.subsequentQueries.emplace_back().conjunction);
-    BuildAST(ctx->compositeQueryPrimary()->linearQueryStatement(),
-             value.subsequentQueries.back().query);
   } else {
-    BuildAST(ctx->compositeQueryPrimary()->linearQueryStatement(),
-             value.firstQuery);
+    BuildAST(ctx->compositeQueryExpressionAmbient(), value);
   }
 }
 
@@ -3356,7 +3441,7 @@ void BuildAST(GQLParser::InsertElementPatternFillerContext* ctx,
   if (auto ctx2 = ctx->elementVariableDeclaration()) {
     auto& var = value.var.emplace();
     AssignInputPosition(ctx2, var);
-    BuildAST(ctx2->elementVariable()->bindingVariable(), var.name);
+    BuildAST(ctx2->elementVariable()->bindingVariable(), var);
   }
   if (auto ctx2 = ctx->labelAndPropertySetSpecification()) {
     if (auto ctx3 = ctx2->labelSetSpecification()) {
@@ -3636,6 +3721,8 @@ void BuildAST(GQLParser::SessionResetCommandContext* ctx,
       ProcessGeneralParameterReference(
           ctx3, value.arguments.emplace<ast::GeneralParameterReference>());
     }
+  } else {
+    value.arguments = ast::SessionResetArguments::Characteristics;
   }
 }
 
@@ -3660,9 +3747,16 @@ void BuildAST(GQLParser::StartTransactionCommandContext* ctx,
               ast::StartTransactionCommand& value) {
   AssignInputPosition(ctx, value);
   if (auto* ctx2 = ctx->transactionCharacteristics()) {
-    // TODO: check 8.2 "TC shall contain exactly one <transaction access mode>"
     BuildAST(ctx2->transactionMode(0)->transactionAccessMode(),
              value.accessMode.emplace());
+    if (auto* ctx3 = ctx2->transactionMode(1)) {
+      // 8.2 Syntax Rule 2: "TC shall contain exactly one <transaction access
+      // mode>"
+      auto token = ctx3->getStart();
+      throw SyntaxRuleError(
+          {token->getLine(), token->getCharPositionInLine()}, ErrorCode::E0089,
+          "Cannot specify more than one transaction access mode");
+    }
   }
 }
 

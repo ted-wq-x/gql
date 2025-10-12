@@ -35,8 +35,8 @@ class GQLParserErrorListener : public BaseErrorListener {
                    size_t charPositionInLine,
                    const std::string& msg,
                    std::exception_ptr) override {
-    throw SyntaxError(line, charPositionInLine, msg,
-                      offendingSymbol->getText());
+    throw ParserError({line, charPositionInLine}, ErrorCode::SyntaxError,
+                      "Parse error {0}", msg, offendingSymbol->getText());
   }
 };
 
@@ -85,37 +85,5 @@ ast::GQLProgram ParseProgram(const char* query, ParserCache* cache) {
   GQL_ASSERT(parser.getNumberOfSyntaxErrors() == 0);
   return program;
 }
-
-ParserError::ParserError(const std::string& what,
-                         size_t line,
-                         size_t col,
-                         const std::string& msg,
-                         const std::string& token)
-    : std::runtime_error(what), line(line), col(col), msg(msg), token(token) {}
-
-SyntaxError::SyntaxError(size_t line,
-                         size_t col,
-                         const std::string& msg,
-                         const std::string& token)
-    : ParserError((std::stringstream() << "Parse error at line " << line << ":"
-                                       << col << " " << msg)
-                      .str(),
-                  line,
-                  col,
-                  msg,
-                  token) {}
-
-OutOfRangeError::OutOfRangeError(size_t line,
-                                 size_t col,
-
-                                 const std::string& msg,
-                                 const std::string& token)
-    : ParserError((std::stringstream() << "Value out of range at line " << line
-                                       << ":" << col << " " << msg)
-                      .str(),
-                  line,
-                  col,
-                  msg,
-                  token) {}
 
 }  // namespace gql::parser

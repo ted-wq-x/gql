@@ -15,7 +15,8 @@
 #pragma once
 
 #include "gql/ast/ast.h"
-#include "gql/parser/error.h"
+#include "gql/error.h"
+#include "gql/gql_export.h"
 
 namespace gql::parser {
 
@@ -23,12 +24,13 @@ class ParserCache;
 
 // Throws ParserError exception on error.
 // If cache is nullptr, the parser will use cache in static memory.
-ast::GQLProgram ParseProgram(const char* query, ParserCache* cache = nullptr);
+GQL_EXPORT ast::GQLProgram ParseProgram(const char* query,
+                                        ParserCache* cache = nullptr);
 
 // Antlr4 part of the parser heavily relies on cache to speed up parsing.
 // This class may be used to manage memory of the cache instead of relying on
 // never-shrinking cache in static memory used by the parser by default.
-class ParserCache {
+class GQL_EXPORT ParserCache {
  public:
   ParserCache();
   ~ParserCache();

@@ -103,7 +103,7 @@ void CheckInputPositions(const NodeType& node,
   }
 }
 
-void CheckInputPositions(gql::ast::GQLProgram& program) {
+void CheckInputPositions(const gql::ast::GQLProgram& program) {
   gql::ast::InputPosition startPosition{0, 0};
   CheckInputPositions(program, startPosition);
 }

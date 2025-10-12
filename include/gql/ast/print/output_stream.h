@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "gql/gql_export.h"
+
 namespace gql::ast::print {
 
 template <typename T, class Enable = void>
@@ -57,7 +59,7 @@ inline QuotedString Quoted(const std::string& str) {
   return {str};
 }
 
-class OutputStreamBase {
+class GQL_EXPORT OutputStreamBase {
  public:
   OutputStreamBase& operator<<(const NoBreak&);
   OutputStreamBase& operator<<(const MarkSymbol&);
