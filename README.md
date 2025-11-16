@@ -162,3 +162,11 @@ If your project does not use CMake, you can manually include the library sources
 
 This library is distributed under the Apache License 2.0.
 
+## GQLLab.com
+
+The [GQLLab.com](https://ide.gqllab.com) website (currently in active development) utilizes this library as its backend component.
+The website provides an interactive environment for learning GQL language capabilities and experimenting with queries on small-scale databases.
+While the GQL implementation on this site is not intended for production use or processing large data volumes, 
+it is being developed to achieve maximum compliance with the ISO/IEC 39075:2024 standard.
+
+The Sample Queries section on the website aims to progressively demonstrate all GQL language features.
