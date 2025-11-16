@@ -8,6 +8,7 @@ It requires C++17 or later and is distributed under the Apache License 2.0.
 - [GQL Parser and AST](#gql-parser-and-ast) 
 - [GQL Syntax Analyzer](#gql-syntax-analyzer)
 - [Build](#build)
+- [GQLLab.com Interactive Environment](#gqllabcom-interactive-environment)
 - [License](#license)
 
 ## GQL Parser and AST
@@ -158,11 +159,7 @@ make
 
 If your project does not use CMake, you can manually include the library sources in your build system with minimal effort.
 
-## License
-
-This library is distributed under the Apache License 2.0.
-
-## GQLLab.com
+## GQLLab.com Interactive Environment
 
 The [GQLLab.com](https://ide.gqllab.com) website (currently in active development) utilizes this library as its backend component.
 The website provides an interactive environment for learning GQL language capabilities and experimenting with queries on small-scale databases.
@@ -170,3 +167,7 @@ While the GQL implementation on this site is not intended for production use or 
 it is being developed to achieve maximum compliance with the ISO/IEC 39075:2024 standard.
 
 The Sample Queries section on the website aims to progressively demonstrate all GQL language features.
+
+## License
+
+This library is distributed under the Apache License 2.0.
