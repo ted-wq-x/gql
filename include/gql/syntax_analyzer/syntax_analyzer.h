@@ -15,6 +15,7 @@
 #pragma once
 
 #include <optional>
+#include <unordered_set>
 #include <vector>
 
 #include "gql/gql_export.h"
@@ -36,7 +37,7 @@ struct SyntaxAnalyzerConfig {
   bool rewriteElementPatternWhereClause = true;
   bool rewriteElementPropertyPredicate = true;
 
-  std::vector<standard::Feature> unsupportedFeatures;
+  std::unordered_set<standard::Feature> unsupportedFeatures;
   std::vector<ast::ValueType> supportedPropertyTypes;
 };
 

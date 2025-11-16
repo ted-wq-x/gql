@@ -237,7 +237,8 @@ void SyntaxAnalyzer::Process(std::vector<ast::BindingVariableDefinition>& vars,
 
           if (HasField(context.workingRecord, statement.var.name)) {
             throw FormattedError(statement.var, ErrorCode::E0072,
-                                 "Duplicate variable name");
+                                 "Duplicate variable name \"{0}\"",
+                                 statement.var.name);
           }
 
           auto implicitType =
@@ -262,7 +263,8 @@ void SyntaxAnalyzer::Process(std::vector<ast::BindingVariableDefinition>& vars,
 
           if (HasField(context.workingRecord, statement.var.name)) {
             throw FormattedError(statement.var, ErrorCode::E0073,
-                                 "Duplicate variable name");
+                                 "Duplicate variable name \"{0}\"",
+                                 statement.var.name);
           }
 
           auto implicitType =
@@ -288,7 +290,8 @@ void SyntaxAnalyzer::Process(std::vector<ast::BindingVariableDefinition>& vars,
 
           if (HasField(context.workingRecord, statement.var.name)) {
             throw FormattedError(statement.var, ErrorCode::E0074,
-                                 "Duplicate variable name");
+                                 "Duplicate variable name \"{0}\"",
+                                 statement.var.name);
           }
 
           auto implicitType = ProcessValueExpression(
@@ -333,8 +336,7 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
             throw FormattedError(statement, ErrorCode::E0076,
                                  "Unexpected data-modifying statement");
         }
-        Process(statement, context);
-        return {};
+        return Process(statement, context);
       },
       [&](ast::CompositeQueryStatement& statement) -> OptBindingTableType {
         // Execute composite query statement
@@ -422,7 +424,6 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
 SyntaxAnalyzer::BindingTableType SyntaxAnalyzer::Process(
     const ast::YieldClause& yield,
     ExecutionContext& context) {
-  // TODO: Check NOTE 258 in 16.14
   std::unordered_set<std::string> referencedFields;
   ast::FieldTypeList newWorkingTable;
   for (const auto& item : yield) {
@@ -431,6 +432,10 @@ SyntaxAnalyzer::BindingTableType SyntaxAnalyzer::Process(
                            "Duplicate field name \"{0}\" in YIELD clause",
                            item.name.name);
     }
+    // NOTE 258 in 16.14: As opposed to the General Rules for <binding
+    // variable>, <yield item>s only consider the current working record and
+    // ignore the working records of any parent execution contexts that precede
+    // the current execution context in the current execution stack.
     auto* referencedField = HasField(context.workingTable, item.name.name);
     if (!referencedField) {
       throw FormattedError(item, ErrorCode::E0081,

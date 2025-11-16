@@ -319,13 +319,15 @@ struct WhenOperand : NodeBase<WhenOperand> {
   struct IsLabeled {
     LabelExpression label;
   };
-  struct IsSourceOrDestinationOf {
-    enum class Direction { Source, Destination };
-    Direction direction = Direction::Source;
+  struct IsSourceOrDestination {
+    enum class Kind { NodeIsSourceOfEdge, NodeIsDestinationOfEdge };
+
+    Kind kind = Kind::NodeIsSourceOfEdge;
     EdgeReference edge;
   };
 
-  bool isNot = false;
+  bool isNot =
+      false;  // Doesn't apply to ValueExpressionPtr and Comparison options.
   std::variant<ValueExpressionPtr,
                Comparison,
                IsNull,
@@ -333,7 +335,7 @@ struct WhenOperand : NodeBase<WhenOperand> {
                IsNormalized,
                IsDirected,
                IsLabeled,
-               IsSourceOrDestinationOf>
+               IsSourceOrDestination>
       option;
 };
 GQL_AST_STRUCT(WhenOperand, isNot, option)
@@ -341,7 +343,7 @@ GQL_AST_STRUCT(WhenOperand::Comparison, op, value)
 GQL_AST_STRUCT(WhenOperand::IsTyped, type)
 GQL_AST_STRUCT(WhenOperand::IsNormalized, form)
 GQL_AST_STRUCT(WhenOperand::IsLabeled, label)
-GQL_AST_STRUCT(WhenOperand::IsSourceOrDestinationOf, direction, edge)
+GQL_AST_STRUCT(WhenOperand::IsSourceOrDestination, kind, edge)
 GQL_AST_VALUE(WhenOperand::IsNull)
 GQL_AST_VALUE(WhenOperand::IsDirected)
 
@@ -920,12 +922,12 @@ GQL_AST_STRUCT(LabeledPredicate, element, isNot, label)
 //     ;
 
 struct SourceDestinationPredicate : NodeBase<SourceDestinationPredicate> {
-  enum class Kind { NodeIsSourceOfEdge, NodeIsDestinationOfEdge };
+  using Kind = WhenOperand::IsSourceOrDestination::Kind;
 
   Kind kind = Kind::NodeIsSourceOfEdge;
   bool isNot = false;
   ElementVariableReference node;
-  ElementVariableReference edge;
+  EdgeReference edge;
 };
 
 GQL_AST_STRUCT(SourceDestinationPredicate, kind, isNot, node, edge)
@@ -1075,7 +1077,7 @@ struct ValueExpression : NodeBase<ValueExpression> {
     CompOp op = CompOp::Equals;
     ValueExpressionPtr left, right;
   };
-  struct Is {
+  struct BooleanTest {
     ValueExpressionPtr expr;
     bool isNot = false;
     TruthValue value = TruthValue::UNKNOWN;
@@ -1085,7 +1087,7 @@ struct ValueExpression : NodeBase<ValueExpression> {
                Unary,
                Binary,
                Comparison,
-               Is,
+               BooleanTest,
                NormalizedPredicate,
                GraphExpression,
                BindingTableExpression,
@@ -1114,6 +1116,6 @@ GQL_AST_STRUCT(ValueExpression, option)
 GQL_AST_STRUCT(ValueExpression::Unary, op, expr)
 GQL_AST_STRUCT(ValueExpression::Binary, op, left, right)
 GQL_AST_STRUCT(ValueExpression::Comparison, left, op, right)
-GQL_AST_STRUCT(ValueExpression::Is, expr, isNot, value)
+GQL_AST_STRUCT(ValueExpression::BooleanTest, expr, isNot, value)
 
 }  // namespace gql::ast

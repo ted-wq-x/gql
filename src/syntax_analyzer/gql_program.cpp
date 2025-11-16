@@ -51,10 +51,7 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
       [&](ast::SessionActivity& value) {
         for (auto& setCmd : value.setCommands) {
           ast::variant_switch(
-              setCmd,
-              [&](const ast::SessionSetSchemaClause&) {
-                // TODO: Implement
-              },
+              setCmd, [&](const ast::SessionSetSchemaClause&) {},
               [&](ast::SessionSetGraphClause& value) {
                 ThrowIfFeatureNotSupported(standard::Feature::GS01, value);
 

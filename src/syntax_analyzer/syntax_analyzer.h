@@ -74,7 +74,9 @@ class SyntaxAnalyzer {
   // Query statements
   OptBindingTableType Process(ast::CompositeQueryStatement&, ExecutionContext&);
   void Process(ast::CompositeQueryPrimary&, ExecutionContext&);
-  void Process(ast::SimpleQueryStatement&, ExecutionContext&);
+  void Process(ast::SimpleQueryStatement&,
+               CallProcedureKind,
+               ExecutionContext&);
   ast::CallProcedureStatement Rewrite(const ast::LetStatement&,
                                       const ExecutionContext&) const;
   void Process(ast::ForStatement&, ExecutionContext&);
@@ -101,21 +103,26 @@ class SyntaxAnalyzer {
   void Process(ast::PropertyKeyValuePair&, ExecutionContext&);
 
   // Data-modifying statements
-  void Process(ast::LinearDataModifyingStatement&, ExecutionContext&);
-  void Process(ast::LinearDataModifyingStatementBody&, ExecutionContext&);
+  OptBindingTableType Process(ast::LinearDataModifyingStatement&,
+                              ExecutionContext&);
+  OptBindingTableType Process(ast::LinearDataModifyingStatementBody&,
+                              ExecutionContext&);
   void Process(ast::PrimitiveDataModifyingStatement&, ExecutionContext&);
   void Process(ast::InsertStatement&, ExecutionContext&);
 
   void Process(ast::LinearCatalogModifyingStatement&, ExecutionContext&);
 
   // Result statements
-  void Process(ast::PrimitiveResultStatement&, ExecutionContext&);
-  void Process(ast::ReturnStatement&, ExecutionContext&);
-  ast::ReturnStatement Rewrite(const ast::ReturnStatement&,
+  // PrimitiveResultStatement sets both current working table and current
+  // execution outcome. [[nodiscard]] is to verify that execution outcome is not
+  // lost.
+  [[nodiscard]] OptBindingTableType Process(ast::PrimitiveResultStatement&,
+                                            ExecutionContext&);
+  void Process(ast::ResultStatement&, ExecutionContext&);
+  ast::ResultStatement Rewrite(const ast::ResultStatement&,
                                const ExecutionContext&) const;
-  ast::PrimitiveResultStatement::Return RewriteOrderByClause(
-      const ast::PrimitiveResultStatement::Return&,
-      const ExecutionContext&) const;
+  ast::ResultStatement RewriteOrderByClause(const ast::ResultStatement&,
+                                            const ExecutionContext&) const;
   void Process(ast::OrderByAndPageStatement&, ExecutionContext&);
 
   void Process(ast::SessionSetParameterClause&, ExecutionContext&);
@@ -172,7 +179,8 @@ class SyntaxAnalyzer {
   ast::ValueType Process(ast::ValueExpression::Binary&,
                          const ast::Node&,
                          const ExecutionContext&);
-  ast::ValueType Process(ast::ValueExpression::Is&, const ExecutionContext&);
+  ast::ValueType Process(ast::ValueExpression::BooleanTest&,
+                         const ExecutionContext&);
   ast::ValueType Process(ast::ValueFunction&, const ExecutionContext&);
   ast::ValueType Process(ast::AggregateFunction&,
                          const ast::Node&,
@@ -190,6 +198,8 @@ class SyntaxAnalyzer {
   ast::ValueType Process(ast::PathValueConstructor&, const ExecutionContext&);
   ast::ValueType Process(ast::PropertyReference&, const ExecutionContext&);
   ast::ValueType Process(ast::CaseExpression&, const ExecutionContext&);
+  ast::ValueType Process(ast::SimpleCase&, const ExecutionContext&);
+  ast::ValueType Process(ast::SearchedCase&, const ExecutionContext&);
   ast::ValueType Process(ast::CastSpecification&, const ExecutionContext&);
   ast::ValueType Process(ast::ElementIdFunction&, const ExecutionContext&);
   ast::ValueType Process(ast::LetValueExpression&, const ExecutionContext&);

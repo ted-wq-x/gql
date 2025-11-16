@@ -40,6 +40,7 @@ void RewritePathPatternPrefix(ast::GraphPattern& graphPattern) {
 
     pathPattern.prefix->pathSearchPrefix = graphPattern.keep->pathSearchPrefix;
   }
+  graphPattern.keep.reset();
 }
 
 void RewritePathPatternPrefix(ast::GQLProgram& program) {

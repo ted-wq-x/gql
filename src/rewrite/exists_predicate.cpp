@@ -42,10 +42,9 @@ void RewriteExistsPredicate(ast::ExistsPredicate& expr) {
   for (auto& stmt : msb.statements) {
     simpleLinearQuery.emplace_back(std::move(stmt));
   }
-  auto& returnItem =
-      linearQuery.result.option.emplace<ast::PrimitiveResultStatement::Return>()
-          .stmt.items.emplace()
-          .emplace_back();
+  auto& returnItem = linearQuery.result.option.emplace<ast::ResultStatement>()
+                         .items.emplace()
+                         .emplace_back();
   returnItem.alias.emplace().name = "gql_gen_return";
   returnItem.aggregate.option.emplace<ast::UnsignedLiteral>()
       .emplace<ast::GeneralLiteral>() = ast::TruthValue::TRUE;

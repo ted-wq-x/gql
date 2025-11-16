@@ -43,11 +43,18 @@ static void FillWhereExpressionsAuxData(
     *cond.auxData = auxData;
     // TODO: Check where to stop search (e.g. nested procedures etc).
     std::unordered_set<std::string> referencedVariables;
-    ast::ForEachNodeOfType<ast::BindingVariableReference>(
-        *cond.condition, [&](const ast::BindingVariableReference& varRef) {
-          referencedVariables.insert(varRef.name);
-          return gql::ast::VisitorResult::kContinue;
-        });
+    ast::ForEachNodeInTree(
+        *cond.condition,
+        ast::overloaded(
+            [&](const auto*) { return gql::ast::VisitorResult::kContinue; },
+            [&](const ast::BindingVariableReference* varRef) {
+              referencedVariables.insert(varRef->name);
+              return gql::ast::VisitorResult::kContinue;
+            },
+            [&](const ast::ElementVariableReference* varRef) {
+              referencedVariables.insert(varRef->name);
+              return gql::ast::VisitorResult::kContinue;
+            }));
 
     for (auto& var : referencedVariables) {
       for (auto* variableScope = cond.variableScope; variableScope;
@@ -346,7 +353,7 @@ static ast::ValueType GetProjectedType(GraphPatternVariableType type,
       elementType.notNull = true;
       auto& list = projectedType.typeOption.emplace<ast::ValueType::List>();
       list.isGroup = true;
-      list.valueType.emplace() = elementType;
+      list.valueType = elementType;
       break;
     }
     default:

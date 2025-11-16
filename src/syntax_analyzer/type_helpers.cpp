@@ -56,6 +56,12 @@ bool IsPathType(const ast::ValueType& type) {
 
 bool IsNullableType(const ast::ValueType& type) {
   // TODO: Recheck
+  if (auto* simpleType =
+          std::get_if<ast::SimplePredefinedType>(&type.typeOption)) {
+    if (*simpleType == ast::SimplePredefinedType::Null) {
+      return true;
+    }
+  }
   if (auto* unionType = std::get_if<ast::ValueType::Union>(&type.typeOption)) {
     return std::any_of(unionType->types.begin(), unionType->types.end(),
                        [](const auto& t) { return IsNullableType(*t); });
@@ -79,11 +85,11 @@ bool IsGroupListType(const ast::ValueType& type) {
   return false;
 }
 
-ast::FieldTypeList CombineColumns(const ast::FieldTypeList&,
+ast::FieldTypeList CombineColumns(const ast::FieldTypeList& table1,
                                   const ast::FieldTypeList&) {
   // TODO: Implement
   // May throw if not combinable
-  return {};
+  return table1;
 }
 
 void AssertComparableTypesInFields(const ast::FieldTypeList& record,
@@ -104,10 +110,23 @@ void AssertComparableTypesInFields(const ast::FieldTypeList& record,
   }
 }
 
-void AssertColumnNameEqual(const ast::FieldTypeList&,
-                           const ast::FieldTypeList&) {
-  // TODO: Implement
-  // May throw
+void AssertColumnNameEqual(const ast::FieldTypeList& table1,
+                           const ast::FieldTypeList& table2,
+                           const ast::Node& node) {
+  for (auto& col : table1) {
+    if (!HasField(table2, col.name.name)) {
+      throw FormattedError(node, ErrorCode::E0117,
+                           "Not all queries return column \"{0}\"",
+                           col.name.name);
+    }
+  }
+  for (auto& col : table2) {
+    if (!HasField(table1, col.name.name)) {
+      throw FormattedError(node, ErrorCode::E0117,
+                           "Not all queries return column \"{0}\"",
+                           col.name.name);
+    }
+  }
 }
 
 void AssertGraphElementReferenceType(const ast::ValueType& type,
@@ -153,7 +172,7 @@ void AssertBindingTableReferenceType(const ast::ValueType& type,
 }
 
 void AssertMaterialType(const ast::ValueType& type, const ast::Node& node) {
-  if (!type.notNull) {
+  if (IsNullableType(type)) {
     throw FormattedError(node, ErrorCode::E0042, "Material type expected");
   }
 }

@@ -51,22 +51,19 @@ ast::CallProcedureStatement SyntaxAnalyzer::Rewrite(
   for (auto& f : context.workingRecord) {
     varScope.emplace_back().name = f.name.name;
   }
-  auto& queries = proc.spec->statements.firstStatement->option
-                      .emplace<ast::CompositeQueryStatement>()
-                      .queries;
+  auto& linearQuery = proc.spec->statements.firstStatement->option
+                          .emplace<ast::CompositeQueryStatement>()
+                          .queries.emplace_back()
+                          .emplace<ast::LinearQueryStatementOption>();
+  auto& queries =
+      linearQuery.statements.emplace<ast::SimpleLinearQueryStatement>();
 
   for (auto& stmt : statement.statements->statements) {
-    queries.emplace_back()
-        .emplace<ast::LinearQueryStatementOption>()
-        .statements.emplace<ast::SimpleLinearQueryStatement>()
-        .emplace_back(stmt);
+    queries.emplace_back(stmt);
   }
 
   ast::ReturnItemList& returnItems =
-      queries.emplace_back()
-          .emplace<ast::LinearQueryStatementOption>()
-          .result.option.emplace<ast::PrimitiveResultStatement::Return>()
-          .stmt.items.emplace();
+      linearQuery.result.option.emplace<ast::ResultStatement>().items.emplace();
 
   std::unordered_set<std::string> cols;
   detail::CollectMatchOutputColumns(statement, cols);

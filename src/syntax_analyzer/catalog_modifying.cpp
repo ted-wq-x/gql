@@ -61,7 +61,7 @@ void SyntaxAnalyzer::Process(ast::LinearCatalogModifyingStatement& statement,
                   ThrowIfFeatureNotSupported(standard::Feature::GG04,
                                              statement);
                 },
-                [&](const ast::GraphTypeReference& statement) {},
+                [&](const ast::GraphTypeReference&) {},
                 [&](const ast::GraphTypeSpecificationBody& statement) {
                   ThrowIfFeatureNotSupported(standard::Feature::GG03,
                                              statement);

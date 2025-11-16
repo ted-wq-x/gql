@@ -41,7 +41,8 @@ class GQLParserErrorListener : public BaseErrorListener {
                    const std::string& msg,
                    std::exception_ptr) override {
     throw FormattedError({line, charPositionInLine}, ErrorCode::SyntaxError,
-                         "Parse error {0}", msg, offendingSymbol->getText());
+                         "Parse error {0}", msg,
+                         offendingSymbol ? offendingSymbol->getText() : "");
   }
 };
 
@@ -54,7 +55,9 @@ ParserCache::ParserCache() : impl_(std::make_unique<Impl>()) {}
 
 ParserCache::~ParserCache() = default;
 
-ast::GQLProgram ParseProgram(const char* query, ParserCache* cache) {
+ast::GQLProgram ParseProgram(const char* query,
+                             const ParserConfig& config,
+                             ParserCache* cache) {
   static_assert(
       std::is_default_constructible<ast::ValueExpression::Unary>::value);
 
@@ -82,11 +85,13 @@ ast::GQLProgram ParseProgram(const char* query, ParserCache* cache) {
         cache->impl_->predictionContextCache_));
   }
 
+  lexer.removeErrorListeners();
+  lexer.addErrorListener(&errorListener);
   parser.removeErrorListeners();
   parser.addErrorListener(&errorListener);
 
   ast::GQLProgram program;
-  ast_builder::BuildAST(parser.gqlProgram(), program);
+  BuildAST(parser.gqlProgram(), program, config);
   GQL_ASSERT(parser.getNumberOfSyntaxErrors() == 0);
   return program;
 }

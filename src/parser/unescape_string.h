@@ -16,8 +16,8 @@
 
 #include <string>
 
-namespace gql::parser::ast_builder {
+namespace gql::parser {
 
 std::string UnescapeQuotedCharacterSequence(const std::string& text);
 
-}  // namespace gql::parser::ast_builder
+}  // namespace gql::parser

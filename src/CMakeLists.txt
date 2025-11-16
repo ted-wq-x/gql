@@ -12,7 +12,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  add_compile_options(/W4 /std:c17 /permissive-)
+  add_compile_options(/W4 /std:c17 /permissive- /MP)
 endif()
 
 include(FetchContent)

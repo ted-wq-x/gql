@@ -237,16 +237,17 @@ struct Printer<WhenOperand> {
           }
           os << v.label;
         },
-        [&](const WhenOperand::IsSourceOrDestinationOf& v) {
+        [&](const WhenOperand::IsSourceOrDestination& v) {
           os << "IS";
           if (w.isNot) {
             os << "NOT";
           }
-          switch (v.direction) {
-            case WhenOperand::IsSourceOrDestinationOf::Direction::Source:
+          switch (v.kind) {
+            case WhenOperand::IsSourceOrDestination::Kind::NodeIsSourceOfEdge:
               os << "SOURCE";
               break;
-            case WhenOperand::IsSourceOrDestinationOf::Direction::Destination:
+            case WhenOperand::IsSourceOrDestination::Kind::
+                NodeIsDestinationOfEdge:
               os << "DESTINATION";
               break;
           }
@@ -717,9 +718,10 @@ struct Printer<ast::ValueExpression::Comparison> {
 };
 
 template <>
-struct Printer<ast::ValueExpression::Is> {
+struct Printer<ast::ValueExpression::BooleanTest> {
   template <typename OutputStream>
-  static void Print(OutputStream& os, const ast::ValueExpression::Is& v) {
+  static void Print(OutputStream& os,
+                    const ast::ValueExpression::BooleanTest& v) {
     os << PrintWithParensIf<BooleanPrimaryRequiresParens>(v.expr) << "IS";
     if (v.isNot)
       os << "NOT";

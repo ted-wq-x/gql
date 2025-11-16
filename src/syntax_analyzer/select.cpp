@@ -52,10 +52,8 @@ std::vector<ast::StatementPtr> SyntaxAnalyzer::Rewrite(
   if (!select.body) {
     // 14.12 Syntax Rule 27.a
     // RETURN SETQ XOISIL
-    ast::ReturnStatementBody& ret =
-        linearQuery->result.option
-            .emplace<ast::PrimitiveResultStatement::Return>()
-            .stmt;
+    ast::ResultStatement& ret =
+        linearQuery->result.option.emplace<ast::ResultStatement>();
     ret.quantifier = select.quantifier;
     ast::variant_switch(
         select.items, [&](const ast::AsteriskValue&) {},
@@ -191,9 +189,8 @@ std::vector<ast::StatementPtr> SyntaxAnalyzer::Rewrite(
       });
 
   ast::ReturnItemList& funcReturnItems =
-      funcLinearQuery.result.option
-          .emplace<ast::PrimitiveResultStatement::Return>()
-          .stmt.items.emplace();
+      funcLinearQuery.result.option.emplace<ast::ResultStatement>()
+          .items.emplace();
   for (auto& var : matchCols) {
     funcReturnItems.emplace_back()
         .aggregate.option.emplace<ast::BindingVariableReference>()
@@ -220,11 +217,11 @@ std::vector<ast::StatementPtr> SyntaxAnalyzer::Rewrite(
   // RETURN SETQ RETURN_LAST
   // // RETURN_LAST = NONAGGREGATING_ITEMS and PARISET
   // ORDER_BY OFFCL LIMCL
-  ast::ReturnStatement returnFirst;
+  ast::ResultStatement returnFirst;
   returnFirst.quantifier = select.quantifier;
   returnFirst.items.emplace();
-  ast::PrimitiveResultStatement::Return returnLast;
-  returnLast.stmt.quantifier = select.quantifier;
+  ast::ResultStatement returnLast;
+  returnLast.quantifier = select.quantifier;
 
   // 14.12 Syntax Rule 12
   // GKRISET
@@ -257,10 +254,10 @@ std::vector<ast::StatementPtr> SyntaxAnalyzer::Rewrite(
 
   if (auto* items = std::get_if<ast::SelectItemList>(&select.items)) {
     for (auto& item : *items) {
-      if (!returnLast.stmt.items) {
-        returnLast.stmt.items.emplace();
+      if (!returnLast.items) {
+        returnLast.items.emplace();
       }
-      auto& returnLastItem = returnLast.stmt.items->emplace_back();
+      auto& returnLastItem = returnLast.items->emplace_back();
       returnLastItem.alias.emplace().name = item.alias->name;
       if (detail::FindDirectlyContainedDescendant<ast::AggregateFunction>(
               item.expr.option)) {
@@ -321,7 +318,7 @@ std::vector<ast::StatementPtr> SyntaxAnalyzer::Rewrite(
 
       // This part is not in the spec, but it seems to be the only way to
       // get the column from LET through the RETURN_LAST to the ORDER BY
-      auto& returnLastItem = returnLast.stmt.items->emplace_back();
+      auto& returnLastItem = returnLast.items->emplace_back();
       returnLastItem.alias.emplace().name = generatedId;
       returnLastItem.aggregate.option.emplace<ast::BindingVariableReference>()
           .name = generatedId;
@@ -390,8 +387,7 @@ std::vector<ast::StatementPtr> SyntaxAnalyzer::Rewrite(
   }
 
   if (!returnFirst.items->empty()) {
-    linearQuery->result.option.emplace<ast::PrimitiveResultStatement::Return>()
-        .stmt = std::move(returnFirst);
+    linearQuery->result.option = std::move(returnFirst);
 
     linearQuery = &newStatements.emplace_back()
                        ->option.emplace<ast::CompositeQueryStatement>()
@@ -422,8 +418,7 @@ std::vector<ast::StatementPtr> SyntaxAnalyzer::Rewrite(
     returnLast.orderByAndPage->offset = *select.offset;
   }
 
-  linearQuery->result.option.emplace<ast::PrimitiveResultStatement::Return>() =
-      std::move(returnLast);
+  linearQuery->result.option = std::move(returnLast);
 
   return newStatements;
 }

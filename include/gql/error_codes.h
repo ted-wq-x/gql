@@ -135,6 +135,8 @@ enum class ErrorCode : int {
   E0113,
   E0114,
   E0115,
+  E0116,
+  E0117,
 };
 
 }  // namespace gql

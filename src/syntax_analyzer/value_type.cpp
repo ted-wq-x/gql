@@ -24,7 +24,6 @@ namespace gql {
 
 ast::ValueType SyntaxAnalyzer::Process(const ast::ValueType& type,
                                        const ExecutionContext& context) const {
-  // TODO: Implement 18.9
   if (type.notNull) {
     ThrowIfFeatureNotSupported(standard::Feature::GV90, type);
   }
@@ -66,57 +65,6 @@ ast::ValueType SyntaxAnalyzer::Process(const ast::ValueType& type,
       },
       [&](const ast::SimpleNumericType& value) {
         switch (value) {
-          case ast::SimpleNumericType::Int:
-          case ast::SimpleNumericType::UInt:
-            break;
-          case ast::SimpleNumericType::Int8:
-            ThrowIfFeatureNotSupported(standard::Feature::GV02, type);
-            break;
-          case ast::SimpleNumericType::Int16:
-            ThrowIfFeatureNotSupported(standard::Feature::GV04, type);
-            break;
-          case ast::SimpleNumericType::Int32:
-            ThrowIfFeatureNotSupported(standard::Feature::GV07, type);
-            break;
-          case ast::SimpleNumericType::Int64:
-            ThrowIfFeatureNotSupported(standard::Feature::GV12, type);
-            break;
-          case ast::SimpleNumericType::Int128:
-            ThrowIfFeatureNotSupported(standard::Feature::GV14, type);
-            break;
-          case ast::SimpleNumericType::Int256:
-            ThrowIfFeatureNotSupported(standard::Feature::GV16, type);
-            break;
-          case ast::SimpleNumericType::SmallInt:
-            ThrowIfFeatureNotSupported(standard::Feature::GV18, type);
-            break;
-          case ast::SimpleNumericType::BigInt:
-            ThrowIfFeatureNotSupported(standard::Feature::GV19, type);
-            break;
-          case ast::SimpleNumericType::UInt8:
-            ThrowIfFeatureNotSupported(standard::Feature::GV01, type);
-            break;
-          case ast::SimpleNumericType::UInt16:
-            ThrowIfFeatureNotSupported(standard::Feature::GV03, type);
-            break;
-          case ast::SimpleNumericType::UInt32:
-            ThrowIfFeatureNotSupported(standard::Feature::GV06, type);
-            break;
-          case ast::SimpleNumericType::UInt64:
-            ThrowIfFeatureNotSupported(standard::Feature::GV11, type);
-            break;
-          case ast::SimpleNumericType::UInt128:
-            ThrowIfFeatureNotSupported(standard::Feature::GV13, type);
-            break;
-          case ast::SimpleNumericType::UInt256:
-            ThrowIfFeatureNotSupported(standard::Feature::GV15, type);
-            break;
-          case ast::SimpleNumericType::USmallInt:
-            ThrowIfFeatureNotSupported(standard::Feature::GV05, type);
-            break;
-          case ast::SimpleNumericType::UBigInt:
-            ThrowIfFeatureNotSupported(standard::Feature::GV10, type);
-            break;
           case ast::SimpleNumericType::Float16:
             ThrowIfFeatureNotSupported(standard::Feature::GV20, type);
             break;
@@ -140,7 +88,7 @@ ast::ValueType SyntaxAnalyzer::Process(const ast::ValueType& type,
             break;
         }
       },
-      [&](const ast::BinaryExactUserNumericType& value) {
+      [&](const ast::BinaryExactNumericType& value) {
         ThrowIfFeatureNotSupported(standard::Feature::GV09, type);
         if (!value.isSigned) {
           ThrowIfFeatureNotSupported(standard::Feature::GV08, type);
@@ -203,28 +151,22 @@ ast::ValueType SyntaxAnalyzer::Process(const ast::ValueType& type,
       [&](const ast::BindingTableReferenceValueType& value) {
         Process(value, type, context);
       },
-      [&](const ast::NodeReferenceValueType& value) {},
-      [&](const ast::EdgeReferenceValueType& value) {},
+      [&](const ast::NodeReferenceValueType&) {},
+      [&](const ast::EdgeReferenceValueType&) {},
       [&](const ast::ValueType::List& value) {
         ThrowIfFeatureNotSupported(standard::Feature::GV50, type);
-        if (!value.valueType) {
-          ThrowIfFeatureNotSupported(standard::Feature::GV66, type);
-        }
 
         if (value.isGroup) {
-          if (!value.valueType ||
-              !(std::holds_alternative<ast::NodeReferenceValueType>(
-                    (*value.valueType)->typeOption) ||
-                std::holds_alternative<ast::EdgeReferenceValueType>(
-                    (*value.valueType)->typeOption))) {
+          if (!std::holds_alternative<ast::NodeReferenceValueType>(
+                  value.valueType->typeOption) &&
+              !std::holds_alternative<ast::EdgeReferenceValueType>(
+                  value.valueType->typeOption)) {
             throw FormattedError(
                 type, ErrorCode::E0097,
                 "Group list element type must be node or edge reference type");
           }
         }
-        if (value.valueType) {
-          Process(**value.valueType, context);
-        }
+        Process(*value.valueType, context);
       },
       [&](const ast::RecordType& value) {
         ThrowIfFeatureNotSupported(standard::Feature::GV45, type);
@@ -249,12 +191,12 @@ ast::ValueType SyntaxAnalyzer::Process(const ast::ValueType& type,
         std::optional<bool> nullable;
         for (auto& t : value.types) {
           Process(*t, context);
-          if (nullable && *nullable != t->notNull) {
+          if (nullable && *nullable != IsNullableType(*t)) {
             throw FormattedError(
                 type, ErrorCode::E0098,
                 "Union type components must have the same nullability");
           }
-          nullable = t->notNull;
+          nullable = IsNullableType(*t);
         }
       });
   return type;

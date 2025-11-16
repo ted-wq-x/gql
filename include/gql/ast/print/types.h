@@ -56,24 +56,6 @@ struct Printer<StringType> {
 };
 
 GQL_AST_ENUM_PRINTER(SimpleNumericType,
-                     (Int8, "INT8"),
-                     (Int16, "INT16"),
-                     (Int32, "INT32"),
-                     (Int64, "INT64"),
-                     (Int128, "INT128"),
-                     (Int256, "INT256"),
-                     (SmallInt, "SMALLINT"),
-                     (Int, "INT"),
-                     (BigInt, "BIGINT"),
-                     (UInt8, "UINT8"),
-                     (UInt16, "UINT16"),
-                     (UInt32, "UINT32"),
-                     (UInt64, "UINT64"),
-                     (UInt128, "UINT128"),
-                     (UInt256, "UINT256"),
-                     (USmallInt, "USMALLINT"),
-                     (UInt, "UINT"),
-                     (UBigInt, "UBIGINT"),
                      (Float16, "FLOAT16"),
                      (Float32, "FLOAT32"),
                      (Float64, "FLOAT64"),
@@ -83,10 +65,32 @@ GQL_AST_ENUM_PRINTER(SimpleNumericType,
                      (Double, "DOUBLE"))
 
 template <>
-struct Printer<BinaryExactUserNumericType> {
+struct Printer<BinaryExactNumericType> {
   template <typename OutputStream>
-  static void Print(OutputStream& os, const BinaryExactUserNumericType& v) {
-    os << (v.isSigned ? "INT" : "UINT") << "(" << v.precision << ")";
+  static void Print(OutputStream& os, const BinaryExactNumericType& v) {
+    switch (v.isSigned ? v.precision + 1 : v.precision) {
+      case 8:
+        os << (v.isSigned ? "INT8" : "UINT8");
+        return;
+      case 16:
+        os << (v.isSigned ? "INT16" : "UINT16");
+        return;
+      case 32:
+        os << (v.isSigned ? "INT32" : "UINT32");
+        return;
+      case 64:
+        os << (v.isSigned ? "INT64" : "UINT64");
+        return;
+      case 128:
+        os << (v.isSigned ? "INT128" : "UINT128");
+        return;
+      case 256:
+        os << (v.isSigned ? "INT256" : "UINT256");
+        return;
+      default:
+        os << (v.isSigned ? "INT" : "UINT") << "(" << v.precision << ")";
+        break;
+    }
   }
 };
 
@@ -204,9 +208,7 @@ struct Printer<ValueType::List> {
   static void Print(OutputStream& os, const ValueType::List& v) {
     if (v.isGroup)
       os << "GROUP";
-    os << "LIST";
-    if (v.valueType)
-      os << "<" << NoBreak() << *v.valueType << NoBreak() << ">";
+    os << "LIST" << "<" << NoBreak() << v.valueType << NoBreak() << ">";
     if (v.maxLength)
       os << "[" << *v.maxLength << "]";
   }

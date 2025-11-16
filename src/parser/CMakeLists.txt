@@ -5,7 +5,7 @@ file(GLOB_RECURSE GQL_HEADER_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/../../in
 
 foreach(i ${GQL_HEADER_FILES})
   get_filename_component(_dir ${i} PATH)
-  set(_pregroup "Headers/${_dir}")
+  set(_pregroup "GQL Headers/${_dir}")
   set(_name "../../include/gql/${i}")
   list(APPEND GQL_HEADERS
     ${_name}
@@ -17,10 +17,12 @@ endforeach()
 set(SOURCES
   ${GQL_HEADERS}
   ast_builder.cpp
+  ast_builder.h
   generated/GQLLexer.cpp
   generated/GQLParser.cpp
   parser.cpp
   unescape_string.cpp
+  unescape_string.h
 )
 
 add_library(gql_parser STATIC

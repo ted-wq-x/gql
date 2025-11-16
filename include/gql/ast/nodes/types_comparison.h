@@ -20,8 +20,8 @@ namespace gql::ast {
 
 inline bool operator==(const ValueType& lhs, const ValueType& rhs);
 
-inline bool operator==(const BinaryExactUserNumericType& lhs,
-                       const BinaryExactUserNumericType& rhs) {
+inline bool operator==(const BinaryExactNumericType& lhs,
+                       const BinaryExactNumericType& rhs) {
   return lhs.isSigned == rhs.isSigned && lhs.precision == rhs.precision;
 }
 

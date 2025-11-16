@@ -1,6 +1,7 @@
 # GQL C++ Parser Library
 
-This library is a C++ parser and AST (Abstract Syntax Tree) implementation for the GQL database language (ISO/IEC 39075:2024). 
+This library is a C++ parser, AST (Abstract Syntax Tree) and syntax analyzer
+implementation for the GQL graph database language (ISO/IEC 39075:2024). 
 It requires C++17 or later and is distributed under the Apache License 2.0.
 
 ### Contents
@@ -128,6 +129,7 @@ the need for many checks.
 ### Syntax Analyzer Usage
 
 ```cpp
+#include <gql/parser/parser.h>
 #include <gql/syntax_analyzer/syntax_analyzer.h>
 
 void analyze_query(const char* query) {
@@ -143,7 +145,8 @@ void analyze_query(const char* query) {
 
 ## Build
 
-The library uses CMake as its build system. Client code should link against the `gql_parser` static library, defined in `src/parser/CMakeLists.txt`.
+The library uses CMake as its build system. Client code should link against the `gql_parser` static library for parser component and `gql_syntax_analyzer` for
+syntax analyzer.
 
 To build the library:
 ```shell

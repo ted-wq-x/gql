@@ -33,7 +33,7 @@ TEST_P(GQLFileTest, Verify) {
   } catch (const gql::ParserError& e) {
     if (e.inputPosition().IsSet()) {
       GTEST_FAIL() << "Error in query at position " << e.inputPosition().line
-                   << ":" << e.inputPosition().col << "\n"
+                   << ":" << e.inputPosition().col + 1 << "\n"
                    << gql::FormatErrorMessageInQuery(query, e.inputPosition(),
                                                      e.message());
     } else {

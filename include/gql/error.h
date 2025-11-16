@@ -45,7 +45,7 @@ class GQL_EXPORT ParserError : public std::runtime_error {
 
 class UnsupportedFeatureError : public ParserError {
  public:
-  UnsupportedFeatureError(standard::Feature, const ast::Node&);
+  UnsupportedFeatureError(standard::Feature, ast::InputPosition);
 
   standard::Feature feature() const { return feature_; }
 

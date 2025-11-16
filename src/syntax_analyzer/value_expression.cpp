@@ -21,6 +21,7 @@
 #include "common/formatted_error.h"
 #include "gql/ast/algorithm.h"
 #include "gql/ast/ast.h"
+#include "gql/ast/nodes/types_comparison.h"
 #include "gql/syntax_analyzer/aux_data.h"
 #include "type_helpers.h"
 
@@ -49,13 +50,15 @@ ast::ValueType SyntaxAnalyzer::ProcessValueExpression(
         return Process(value, expr, context);
       },
       [&](ast::ProcedureBodyPtr& value) {
+        ThrowIfFeatureNotSupported(standard::Feature::GQ18, *value);
+
         auto childContext = context.MakeCopyForProcedureBody();
         auto optTableType =
             Process(*value, CallProcedureKind::Query, childContext);
         if (!optTableType) {
           return MakeValueType(ast::SimplePredefinedType::Null);
         }
-        // TODO: Implement
+        // TODO: Implement 20.6
         return ast::ValueType{};
       });
 }
@@ -438,31 +441,29 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ValueExpression::Unary& expr,
       return ProcessNumericValueExpression(*expr.expr, context);
     case ast::ValueExpression::Unary::Op::CharLength:
       ProcessCharacterStringValueExpression(*expr.expr, context);
-      return MakeValueType(ast::SimpleNumericType::UInt64);
+      return MakeValueTypeUInt64();
     case ast::ValueExpression::Unary::Op::ByteLength:
       ThrowIfFeatureNotSupported(standard::Feature::GV35, node);
 
       ProcessByteStringValueExpression(*expr.expr, context);
-      return MakeValueType(ast::SimpleNumericType::UInt64);
+      return MakeValueTypeUInt64();
     case ast::ValueExpression::Unary::Op::PathLength:
       ThrowIfFeatureNotSupported(standard::Feature::GF04, node);
 
       ProcessPathValueExpression(*expr.expr, context);
-      return MakeValueType(ast::SimpleNumericType::UInt64);
+      return MakeValueTypeUInt64();
     case ast::ValueExpression::Unary::Op::Size: {
       ThrowIfFeatureNotSupported(standard::Feature::GF13, node);
 
       auto argType = ProcessListValueExpression(*expr.expr, context);
-      auto resType = MakeValueType(ast::SimpleNumericType::UInt64);
-      resType.notNull = argType.notNull;
-      return resType;
+      return MakeValueTypeUInt64(argType.notNull);
     }
     case ast::ValueExpression::Unary::Op::Cardinality: {
       ThrowIfFeatureNotSupported(standard::Feature::GF12, node);
 
       auto argType = ProcessValueExpression(*expr.expr, context);
       // TODO: Check for acceptable types
-      auto resType = MakeValueType(ast::SimpleNumericType::UInt64);
+      auto resType = MakeValueTypeUInt64();
       resType.notNull = argType.notNull;
       return resType;
     }
@@ -478,7 +479,7 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ValueExpression::Unary& expr,
       elementType.types.emplace_back() =
           MakeValueType(ast::EdgeReferenceValueType{});
       ast::ValueType::List listType;
-      listType.valueType.emplace() = MakeValueType(elementType);
+      listType.valueType = MakeValueType(elementType);
       return MakeValueType(listType, !IsNullableType(argType));
     }
     default:
@@ -525,7 +526,7 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ValueExpression::Binary& expr,
   return {};
 }
 
-ast::ValueType SyntaxAnalyzer::Process(ast::ValueExpression::Is& expr,
+ast::ValueType SyntaxAnalyzer::Process(ast::ValueExpression::BooleanTest& expr,
                                        const ExecutionContext& context) {
   ProcessBooleanValueExpression(*expr.expr, context);
   return MakeValueType(ast::SimplePredefinedType::Boolean);
@@ -654,7 +655,7 @@ ast::ValueType SyntaxAnalyzer::Process(ast::AggregateFunction& expr,
                                "COUNT(*) function shall be contained in an "
                                "aggregating value expression");
         }
-        return MakeValueType(ast::SimpleNumericType::UInt64);
+        return MakeValueTypeUInt64();
       },
       [&](ast::GeneralSetFunction& func) {
         switch (func.type) {
@@ -675,14 +676,14 @@ ast::ValueType SyntaxAnalyzer::Process(ast::AggregateFunction& expr,
         switch (func.type) {
           case ast::GeneralSetFunctionType::COLLECT_LIST: {
             ast::ValueType::List listType;
-            listType.valueType.emplace() = operandType;
+            listType.valueType = operandType;
             return MakeValueType(listType);
           }
           case ast::GeneralSetFunctionType::STDDEV_SAMP:
           case ast::GeneralSetFunctionType::STDDEV_POP:
             return MakeValueType(ast::SimpleNumericType::Double);
           case ast::GeneralSetFunctionType::COUNT:
-            return MakeValueType(ast::SimpleNumericType::UInt64);
+            return MakeValueTypeUInt64();
           case ast::GeneralSetFunctionType::AVG:
           case ast::GeneralSetFunctionType::MIN:
           case ast::GeneralSetFunctionType::MAX:
@@ -721,7 +722,8 @@ ast::ValueType SyntaxAnalyzer::Process(ast::UnsignedLiteral& expr,
             },
             [&](const ast::ExactNumericLiteral& lit) {
               if (lit.scale == 0) {
-                return MakeValueType(ast::SimpleNumericType::Int64);
+                return MakeValueType(
+                    ast::BinaryExactNumericType{/* isSigned= */ true, 63});
               } else {
                 return MakeValueType(
                     ast::ScaleNumericType{ast::ScaleNumericType::Type::Decimal,
@@ -758,10 +760,28 @@ ast::ValueType SyntaxAnalyzer::Process(ast::UnsignedLiteral& expr,
               ThrowIfFeatureNotSupported(standard::Feature::GV50, listLiteral);
 
               // TODO: 20.17
-              for (auto& item : listLiteral.elements) {
-                ProcessValueExpression(*item, context);
+              ast::ValueType::List listType;
+              listType.maxLength = listLiteral.elements.size();
+              if (listLiteral.elements.empty()) {
+                listType.valueType =
+                    MakeValueType(ast::SimplePredefinedType::Null);
+                return MakeValueType(listType);
               }
-              return MakeValueType(ast::SimplePredefinedType::Boolean);
+
+              std::optional<ast::ValueType> lastValueType;
+              for (auto& item : listLiteral.elements) {
+                auto valueType = ProcessValueExpression(*item, context);
+                if (lastValueType) {
+                  if (valueType != *lastValueType) {
+                    // TODO: 22.18
+                    return MakeValueType(ast::SimplePredefinedType::Null);
+                  }
+                } else {
+                  lastValueType = valueType;
+                }
+              }
+              listType.valueType = *lastValueType;
+              return MakeValueType(listType);
             },
             [&](ast::RecordLiteral& recordLiteral) {
               ThrowIfFeatureNotSupported(standard::Feature::GV45, node);
@@ -791,8 +811,7 @@ ast::ValueType SyntaxAnalyzer::Process(ast::GeneralParameterReference&,
 
 ast::ValueType SyntaxAnalyzer::Process(ast::SessionUserValue&,
                                        const ExecutionContext&) {
-  // TODO:
-  return {};
+  return MakeValueType(ast::StringType{});
 }
 
 ast::ValueType SyntaxAnalyzer::Process(ast::PathValueConstructor& expr,
@@ -811,11 +830,195 @@ ast::ValueType SyntaxAnalyzer::Process(ast::PathValueConstructor& expr,
 
 ast::ValueType SyntaxAnalyzer::Process(ast::CaseExpression& expr,
                                        const ExecutionContext& context) {
-  // TODO:
+  // TODO: Move rewrites to own module?
+  return ast::variant_switch(
+      expr,
+      [&](ast::NullIfCaseAbbreviation& expr) {
+        // First we process the sub-expressions to ensure that possible rewrites
+        // inside them are persisted. But resulting type and additional checks
+        // will be done on rewritten temporary copy.
+        ProcessValueExpression(*expr.first, context);
+        ProcessValueExpression(*expr.second, context);
+
+        // Rewrite to:
+        // CASE
+        //  WHEN V1 = V2 THEN NULL
+        //  ELSE V1
+        // END
+        ast::SearchedCase searchedCase;
+        auto& when = searchedCase.when.emplace_back();
+        auto& eqOp =
+            when.condition->option.emplace<ast::ValueExpression::Comparison>();
+        eqOp.op = ast::CompOp::Equals;
+        eqOp.left = expr.first;
+        eqOp.right = expr.second;
+        when.result.emplace<ast::NullLiteral>();
+        searchedCase.else_.emplace().emplace<ast::ValueExpressionPtr>() =
+            expr.first;
+        return Process(searchedCase, context);
+      },
+      [&](ast::CoalesceCaseAbbreviation& expr) {
+        // First we process the sub-expressions to ensure that possible rewrites
+        // inside them are persisted. But resulting type and additional checks
+        // will be done on rewritten temporary copy.
+        for (auto& subExpr : expr.expressions) {
+          ProcessValueExpression(*subExpr, context);
+        }
+
+        ast::SearchedCase searchedCase;
+        auto& when = searchedCase.when.emplace_back();
+        auto& isNull = when.condition->option.emplace<ast::Predicate>()
+                           .emplace<ast::NullPredicate>();
+        isNull.expr = expr.expressions[0];
+        isNull.isNot = true;
+        when.result.emplace<ast::ValueExpressionPtr>() = expr.expressions[0];
+        auto& elseExpr =
+            *searchedCase.else_.emplace().emplace<ast::ValueExpressionPtr>();
+        if (expr.expressions.size() == 2) {
+          elseExpr = *expr.expressions[1];
+        } else {
+          // Rewrite to nested COALESCE
+          auto nestedCoalesce = expr;
+          nestedCoalesce.expressions.erase(nestedCoalesce.expressions.begin());
+          elseExpr.option.emplace<ast::CaseExpression>() = nestedCoalesce;
+        }
+
+        return Process(searchedCase, context);
+      },
+      [&](ast::SimpleCase& expr) { return Process(expr, context); },
+      [&](ast::SearchedCase& expr) { return Process(expr, context); });
+}
+
+ast::ValueType SyntaxAnalyzer::Process(ast::SimpleCase& expr,
+                                       const ExecutionContext& context) {
   ast::variant_switch(
-      expr, [&](const ast::NullIfCaseAbbreviation&) {},
-      [&](const ast::CoalesceCaseAbbreviation&) {},
-      [&](const ast::SimpleCase&) {}, [&](const ast::SearchedCase&) {});
+      expr.operand,
+      [&](ast::ValueExpressionPtr& expr) {
+        ProcessValueExpression(*expr, context);
+      },
+      [&](ast::ElementVariableReference& expr) {
+        ProcessSingleton(expr, context);
+      });
+
+  std::optional<bool> isEveryElementPredicate;
+  for (auto& whenCase : expr.when) {
+    for (auto& whenOp : whenCase.operands) {
+      bool isElementPredicate = ast::variant_switch(
+          whenOp.option,
+          [&](ast::ValueExpressionPtr& expr) {
+            ProcessValueExpression(*expr, context);
+            return false;
+          },
+          [&](ast::WhenOperand::Comparison& expr) {
+            ProcessValueExpression(*expr.value, context);
+            return false;
+          },
+          [&](ast::WhenOperand::IsDirected&) { return true; },
+          [&](ast::WhenOperand::IsLabeled&) { return true; },
+          [&](ast::WhenOperand::IsNormalized&) { return false; },
+          [&](ast::WhenOperand::IsTyped& expr) {
+            Process(expr.type, context);
+            return false;
+          },
+          [&](ast::WhenOperand::IsNull&) { return false; },
+          [&](ast::WhenOperand::IsSourceOrDestination& expr) {
+            ProcessSingleton(expr.edge, context);
+            return true;
+          });
+      if (isEveryElementPredicate.has_value() &&
+          *isEveryElementPredicate != isElementPredicate) {
+        throw FormattedError(expr, ErrorCode::E0116,
+                             "Inconsistent CASE operand type and predicate");
+      }
+      isEveryElementPredicate = isElementPredicate;
+    }
+  }
+
+  ast::SearchedCase searchedCase;
+  searchedCase.else_ = expr.else_;
+  for (auto& whenCase : expr.when) {
+    auto& searchedWhen = searchedCase.when.emplace_back();
+    searchedWhen.result = whenCase.result;
+    bool isFirstOperand = true;
+    for (auto& whenOp : whenCase.operands) {
+      ast::ValueExpression* condition = nullptr;
+      if (isFirstOperand) {
+        condition = searchedWhen.condition.get();
+        isFirstOperand = false;
+      } else {
+        // Combine multiple operands with OR
+        auto oldCondition = std::move(searchedWhen.condition);
+        auto& newCondition = searchedWhen.condition->option
+                                 .emplace<ast::ValueExpression::Binary>();
+        newCondition.op = ast::ValueExpression::Binary::Op::BoolOr;
+        newCondition.left = std::move(oldCondition);
+        condition = newCondition.right.get();
+      }
+      if (*isEveryElementPredicate) {
+        auto& predicate = condition->option.emplace<ast::Predicate>();
+        ast::variant_switch(
+            whenOp.option, [&](const auto&) { assert(false); },
+            [&](ast::WhenOperand::IsDirected&) {
+              auto& pred = predicate.emplace<ast::DirectedPredicate>();
+              pred.element =
+                  std::get<ast::ElementVariableReference>(expr.operand);
+              pred.isNot = whenOp.isNot;
+            },
+            [&](ast::WhenOperand::IsLabeled& whenPred) {
+              auto& pred = predicate.emplace<ast::LabeledPredicate>();
+              pred.element =
+                  std::get<ast::ElementVariableReference>(expr.operand);
+              pred.isNot = whenOp.isNot;
+              pred.label = whenPred.label;
+            },
+            [&](ast::WhenOperand::IsSourceOrDestination& whenPred) {
+              auto& pred = predicate.emplace<ast::SourceDestinationPredicate>();
+              pred.kind = whenPred.kind;
+              pred.node = std::get<ast::ElementVariableReference>(expr.operand);
+              pred.edge = whenPred.edge;
+              pred.isNot = whenOp.isNot;
+            });
+      } else {
+        ast::variant_switch(
+            whenOp.option, [&](const auto&) { assert(false); },
+            [&](ast::ValueExpressionPtr& whenPred) {
+              auto& pred =
+                  condition->option.emplace<ast::ValueExpression::Comparison>();
+              pred.left = std::get<ast::ValueExpressionPtr>(expr.operand);
+              pred.op = ast::CompOp::Equals;
+              pred.right = whenPred;
+            },
+            [&](ast::WhenOperand::Comparison& whenPred) {
+              auto& pred =
+                  condition->option.emplace<ast::ValueExpression::Comparison>();
+              pred.left = std::get<ast::ValueExpressionPtr>(expr.operand);
+              pred.op = whenPred.op;
+              pred.right = whenPred.value;
+            },
+            [&](ast::WhenOperand::IsNormalized& whenPred) {
+              auto& pred =
+                  condition->option.emplace<ast::NormalizedPredicate>();
+              pred.expr = std::get<ast::ValueExpressionPtr>(expr.operand);
+              pred.form = whenPred.form;
+              pred.isNot = whenOp.isNot;
+            },
+            [&](ast::WhenOperand::IsNull&) {
+              assert(false);
+              auto& pred = condition->option.emplace<ast::Predicate>()
+                               .emplace<ast::NullPredicate>();
+              pred.expr = std::get<ast::ValueExpressionPtr>(expr.operand);
+              pred.isNot = whenOp.isNot;
+            });
+      }
+    }
+  }
+
+  return Process(searchedCase, context);
+}
+
+ast::ValueType SyntaxAnalyzer::Process(ast::SearchedCase& expr,
+                                       const ExecutionContext& context) {
+  // TODO: Implement
   return {};
 }
 
@@ -849,7 +1052,7 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ElementIdFunction& expr,
   ThrowIfFeatureNotSupported(standard::Feature::G100, expr);
 
   auto type = ProcessSingleton(expr.variable, context);
-  return MakeValueType(ast::SimpleNumericType::UInt64, type.notNull);
+  return MakeValueTypeUInt64(type.notNull);
 }
 
 ast::ValueType SyntaxAnalyzer::Process(ast::LetValueExpression& expr,

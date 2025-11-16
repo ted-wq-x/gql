@@ -16,9 +16,21 @@
 
 #include "generated/GQLParser.h"
 #include "gql/ast/ast.h"
+#include "gql/parser/parser.h"
 
-namespace gql::parser::ast_builder {
+namespace gql::parser {
 
-void BuildAST(GQLParser::GqlProgramContext* ctx, ast::GQLProgram& value);
+void BuildAST(GQLParser::GqlProgramContext*,
+              ast::GQLProgram&,
+              const ParserConfig&);
 
-}  // namespace gql::parser::ast_builder
+void BuildASTForTesting(GQLParser::UnsignedNumericLiteralContext* ctx,
+                        ast::UnsignedNumericLiteral& value);
+void BuildASTForTesting(GQLParser::CharacterStringLiteralContext* ctx,
+                        std::string& value);
+void BuildASTForTesting(GQLParser::ValueTypeContext* ctx,
+                        ast::ValueType& value);
+void BuildASTForTesting(GQLParser::ValueExpressionContext* ctx,
+                        ast::ValueExpression& value);
+
+}  // namespace gql::parser

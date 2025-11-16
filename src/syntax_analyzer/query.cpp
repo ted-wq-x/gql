@@ -69,13 +69,13 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
   for (auto& query : stmt.queries) {
     auto childContext = context.MakeCopy();
     // TODO: What about childContext?
-    Process(query, context);
+    Process(query, childContext);
     if (firstQuery) {
-      combinedTable = context.workingTable;
+      combinedTable = childContext.workingTable;
       firstQuery = false;
     } else {
-      AssertColumnNameEqual(combinedTable, context.workingTable);
-      combinedTable = CombineColumns(combinedTable, context.workingTable);
+      AssertColumnNameEqual(combinedTable, childContext.workingTable, stmt);
+      combinedTable = CombineColumns(combinedTable, childContext.workingTable);
       if (requireComparableCols) {
         // 14.2 Syntax Rule 10.a.vii.1
         AssertComparableTypesInFields(combinedTable, stmt);
@@ -96,7 +96,7 @@ void SyntaxAnalyzer::Process(ast::CompositeQueryPrimary& query,
             statement.statements,
             [&](ast::SimpleLinearQueryStatement& statement) {
               for (auto& simpleStmt : statement) {
-                Process(simpleStmt, context);
+                Process(simpleStmt, CallProcedureKind::Query, context);
               }
             },
             [&](std::vector<ast::FocusedLinearQueryStatementPart>& parts) {
@@ -105,11 +105,13 @@ void SyntaxAnalyzer::Process(ast::CompositeQueryPrimary& query,
               for (auto& part : parts) {
                 ProcessFallback(part.useGraph, context);
                 for (auto& simpleStmt : part.statements) {
-                  Process(simpleStmt, context);
+                  Process(simpleStmt, CallProcedureKind::Query, context);
                 }
               }
             });
-        Process(statement.result, context);
+        // Suppressing warning about discarded result. Current execution outcome
+        // is set by CompositeQueryStatement anyway.
+        (void)Process(statement.result, context);
       },
       [&](ast::NestedQuerySpecification& statement) {
         if (statement.useGraph) {
@@ -126,7 +128,9 @@ void SyntaxAnalyzer::Process(ast::CompositeQueryPrimary& query,
         ThrowIfFeatureNotSupported(standard::Feature::GQ01, statement);
 
         ProcessFallback(statement.useGraph, context);
-        Process(statement.result, context);
+        // Suppressing warning about discarded result. Current execution outcome
+        // is set by CompositeQueryStatement anyway.
+        (void)Process(statement.result, context);
       },
       [&](const ast::SelectStatement& statement) {
         StatementRewriteException exc;
@@ -136,6 +140,7 @@ void SyntaxAnalyzer::Process(ast::CompositeQueryPrimary& query,
 }
 
 void SyntaxAnalyzer::Process(ast::SimpleQueryStatement& simpleStmt,
+                             CallProcedureKind kind,
                              ExecutionContext& context) {
   ast::variant_switch(
       simpleStmt,
@@ -152,9 +157,11 @@ void SyntaxAnalyzer::Process(ast::SimpleQueryStatement& simpleStmt,
 
               ast::SimpleQueryStatement newSimpleStmt =
                   Rewrite(optMatch, context);
-              Process(newSimpleStmt, context);
               if (config_.rewriteOptionalMatchStatement) {
                 simpleStmt = std::move(newSimpleStmt);
+                Process(simpleStmt, kind, context);
+              } else {
+                Process(newSimpleStmt, kind, context);
               }
             });
       },
@@ -162,7 +169,7 @@ void SyntaxAnalyzer::Process(ast::SimpleQueryStatement& simpleStmt,
         ThrowIfFeatureNotSupported(standard::Feature::GQ09, statement);
 
         ast::SimpleQueryStatement newSimpleStmt = Rewrite(statement, context);
-        Process(newSimpleStmt, context);
+        Process(newSimpleStmt, kind, context);
         if (config_.rewriteLetStatement) {
           simpleStmt = std::move(newSimpleStmt);
         }
@@ -178,7 +185,7 @@ void SyntaxAnalyzer::Process(ast::SimpleQueryStatement& simpleStmt,
         Process(statement, context);
       },
       [&](ast::CallProcedureStatement& statement) {
-        Process(statement, CallProcedureKind::Query, context);
+        Process(statement, kind, context);
       });
 }
 
@@ -200,8 +207,8 @@ ast::CallProcedureStatement SyntaxAnalyzer::Rewrite(
           .emplace<ast::CompositeQueryStatement>()
           .queries.emplace_back()
           .emplace<ast::LinearQueryStatementOption>()
-          .result.option.emplace<ast::PrimitiveResultStatement::Return>()
-          .stmt.items.emplace();
+          .result.option.emplace<ast::ResultStatement>()
+          .items.emplace();
   for (auto& letVar : statement.definitions) {
     auto& procVar =
         procBody.vars.emplace_back().emplace<ast::ValueVariableDefinition>();
@@ -241,7 +248,7 @@ void SyntaxAnalyzer::Process(ast::ForStatement& statement,
 
     auto& newField = outWorkingTable.emplace_back();
     newField.name.name = statement.ordinalityOrOffset->var.name;
-    newField.type = MakeValueType(ast::SimpleNumericType::UInt64);
+    newField.type = MakeValueTypeUInt64();
   }
 
   if (HasField(context.workingRecord, statement.alias.name)) {
@@ -268,11 +275,7 @@ void SyntaxAnalyzer::Process(ast::ForStatement& statement,
 
     auto& newField = outWorkingTable.emplace_back();
     newField.name.name = statement.alias.name;
-    if (listType->valueType) {
-      newField.type = *listType->valueType;
-    } else {
-      newField.type = MakeValueType(ast::SimplePredefinedType::Any);
-    }
+    newField.type = *listType->valueType;
   } else {
     throw FormattedError(statement.source, ErrorCode::E0059,
                          "List or binding table reference expected");

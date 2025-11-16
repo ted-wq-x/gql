@@ -71,24 +71,6 @@ GQL_AST_STRUCT(StringType, kind, minLength, maxLength)
 //     ;
 
 enum class SimpleNumericType {
-  Int8,
-  Int16,
-  Int32,
-  Int64,
-  Int128,
-  Int256,
-  SmallInt,
-  Int,
-  BigInt,
-  UInt8,
-  UInt16,
-  UInt32,
-  UInt64,
-  UInt128,
-  UInt256,
-  USmallInt,
-  UInt,
-  UBigInt,
   Float16,
   Float32,
   Float64,
@@ -98,11 +80,11 @@ enum class SimpleNumericType {
   Double
 };
 
-struct BinaryExactUserNumericType {
+struct BinaryExactNumericType {
   bool isSigned = false;
   uint64_t precision = 0;
 };
-GQL_AST_STRUCT(BinaryExactUserNumericType, isSigned, precision)
+GQL_AST_STRUCT(BinaryExactNumericType, isSigned, precision)
 
 struct ScaleNumericType {
   enum class Type { Decimal, Float };
@@ -396,7 +378,7 @@ GQL_AST_STRUCT(RecordType, fields)
 struct ValueType : NodeBase<ValueType> {
   struct List {
     bool isGroup = false;
-    std::optional<ValueTypePtr> valueType;
+    ValueTypePtr valueType;
     std::optional<UnsignedInteger> maxLength;
   };
   struct Union {
@@ -406,7 +388,7 @@ struct ValueType : NodeBase<ValueType> {
   std::variant<SimplePredefinedType,
                StringType,
                SimpleNumericType,
-               BinaryExactUserNumericType,
+               BinaryExactNumericType,
                ScaleNumericType,
                GraphReferenceValueType,
                BindingTableReferenceValueType,

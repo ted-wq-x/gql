@@ -139,8 +139,7 @@ GQL_AST_STRUCT(ElementVariableReference, name)
 // edgeReference
 //    : elementVariableReference
 //    ;
-struct EdgeReference : BindingVariableBase, NodeBase<EdgeReference> {};
-GQL_AST_STRUCT(EdgeReference, name)
+using EdgeReference = ElementVariableReference;
 
 // unsignedInteger
 //    : UNSIGNED_DECIMAL_INTEGER

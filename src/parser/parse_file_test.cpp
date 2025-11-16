@@ -48,7 +48,7 @@ TEST_P(GQLFileTest, Parse) {
 
   gql::ast::GQLProgram program;
   try {
-    program = gql::parser::ParseProgram(query.c_str(), parserCache_.get());
+    program = gql::parser::ParseProgram(query.c_str(), {}, parserCache_.get());
   } catch (const std::runtime_error& e) {
     GTEST_FAIL() << e.what() << "\nparsing loaded query: " << query;
   }
@@ -66,7 +66,8 @@ TEST_P(GQLFileTest, Parse) {
   const auto print1 = gql::ast::PrintTree(program);
   gql::ast::GQLProgram program1;
   try {
-    program1 = gql::parser::ParseProgram(print1.c_str(), parserCache_.get());
+    program1 =
+        gql::parser::ParseProgram(print1.c_str(), {}, parserCache_.get());
   } catch (const std::runtime_error& e) {
     GTEST_FAIL() << e.what() << "\nparsing printed query: " << print1;
   }

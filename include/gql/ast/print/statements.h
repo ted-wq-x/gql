@@ -667,9 +667,10 @@ struct Printer<ReturnItem> {
 GQL_AST_VALUE_PRINTER(AsteriskValue, "*")
 
 template <>
-struct Printer<ReturnStatementBody> {
+struct Printer<ResultStatement> {
   template <typename OutputStream>
-  static void Print(OutputStream& os, const ReturnStatementBody& v) {
+  static void Print(OutputStream& os, const ResultStatement& v) {
+    os << "RETURN";
     if (v.quantifier != SetQuantifier::ALL)
       os << v.quantifier;
 
@@ -685,15 +686,8 @@ struct Printer<ReturnStatementBody> {
     if (!v.groupBy.empty()) {
       os << "GROUP BY" << Sequence(v.groupBy, ",");
     }
-  }
-};
 
-template <>
-struct Printer<PrimitiveResultStatement::Return> {
-  template <typename OutputStream>
-  static void Print(OutputStream& os,
-                    const PrimitiveResultStatement::Return& v) {
-    os << "RETURN" << v.stmt << v.orderByAndPage;
+    os << v.orderByAndPage;
   }
 };
 

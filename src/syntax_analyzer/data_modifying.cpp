@@ -24,7 +24,7 @@
 
 namespace gql {
 
-void SyntaxAnalyzer::Process(
+SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
     ast::LinearDataModifyingStatement& dataModifyingStmt,
     ExecutionContext& context) {
   if (dataModifyingStmt.useGraph) {
@@ -38,22 +38,26 @@ void SyntaxAnalyzer::Process(
         "Data-modifying statement cannot be executed inside read-only "
         "transaction");
   }
-  ast::variant_switch(
+  return ast::variant_switch(
       dataModifyingStmt.option,
       [&](ast::LinearDataModifyingStatementBody& statement) {
-        Process(statement, context);
+        return Process(statement, context);
       },
-      [&](ast::ProcedureBody& statement) {
+      [&](ast::ProcedureBody& statement) -> OptBindingTableType {
         Process(statement, CallProcedureKind::DataModifying, context);
+        return {};
       });
 }
 
-void SyntaxAnalyzer::Process(ast::LinearDataModifyingStatementBody& statement,
-                             ExecutionContext& context) {
+SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
+    ast::LinearDataModifyingStatementBody& statement,
+    ExecutionContext& context) {
   for (auto& stmt : statement.statements) {
     ast::variant_switch(
         stmt,
-        [&](ast::SimpleQueryStatement& query) { Process(query, context); },
+        [&](ast::SimpleQueryStatement& query) {
+          Process(query, CallProcedureKind::DataModifying, context);
+        },
         [&](ast::PrimitiveDataModifyingStatement& prim) {
           ThrowIfFeatureNotSupported(standard::Feature::GD01, statement);
 
@@ -66,8 +70,9 @@ void SyntaxAnalyzer::Process(ast::LinearDataModifyingStatementBody& statement,
         });
   }
   if (statement.result) {
-    Process(*statement.result, context);
+    return Process(*statement.result, context);
   }
+  return {};
 }
 
 void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
@@ -78,6 +83,7 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
       [&](ast::SetStatement& statement) {
         std::unordered_set<std::string> setAllVars;
         std::set<std::pair<std::string, std::string>> setProps;
+        auto childContext = context.MakeAmended();
         for (auto& item : statement.items) {
           ast::variant_switch(
               item,
@@ -92,9 +98,9 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
                       "and property");
                 }
 
-                AssertGraphElementReferenceType(Process(statement.var, context),
-                                                statement.var);
-                ProcessPropertyValueExpression(statement.value, context);
+                AssertGraphElementReferenceType(
+                    Process(statement.var, childContext), statement.var);
+                ProcessPropertyValueExpression(statement.value, childContext);
               },
               [&](ast::SetAllPropertiesItem& statement) {
                 if (!setAllVars.insert(statement.var.name).second) {
@@ -105,37 +111,39 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
                       "variable");
                 }
 
-                AssertGraphElementReferenceType(Process(statement.var, context),
-                                                statement.var);
+                AssertGraphElementReferenceType(
+                    Process(statement.var, childContext), statement.var);
                 for (auto& p : statement.properties) {
-                  ProcessPropertyValueExpression(p.value, context);
+                  ProcessPropertyValueExpression(p.value, childContext);
                 }
               },
               [&](const ast::SetLabelItem& statement) {
                 ThrowIfFeatureNotSupported(standard::Feature::GD02, statement);
 
-                AssertGraphElementReferenceType(Process(statement.var, context),
-                                                statement.var);
+                AssertGraphElementReferenceType(
+                    Process(statement.var, childContext), statement.var);
               });
         }
       },
       [&](const ast::RemoveStatement& statement) {
+        auto childContext = context.MakeAmended();
         for (const auto& item : statement.items) {
           ast::variant_switch(
               item,
               [&](const ast::RemovePropertyItem& statement) {
-                AssertGraphElementReferenceType(Process(statement.var, context),
-                                                statement.var);
+                AssertGraphElementReferenceType(
+                    Process(statement.var, childContext), statement.var);
               },
               [&](const ast::RemoveLabelItem& statement) {
                 ThrowIfFeatureNotSupported(standard::Feature::GD02, statement);
 
-                AssertGraphElementReferenceType(Process(statement.var, context),
-                                                statement.var);
+                AssertGraphElementReferenceType(
+                    Process(statement.var, childContext), statement.var);
               });
         }
       },
       [&](ast::DeleteStatement& statement) {
+        auto childContext = context.MakeAmended();
         for (auto& item : statement.items) {
           if (!std::holds_alternative<ast::BindingVariableReference>(
                   item.option)) {
@@ -146,8 +154,8 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
             ThrowIfFeatureNotSupported(standard::Feature::GD03, **proc);
           }
 
-          AssertGraphElementReferenceType(ProcessValueExpression(item, context),
-                                          item);
+          AssertGraphElementReferenceType(
+              ProcessValueExpression(item, childContext), item);
         }
       });
 }
@@ -239,8 +247,8 @@ void SyntaxAnalyzer::Process(ast::InsertStatement& statement,
     }
   }
 
-  context.workingRecord.insert(context.workingRecord.end(),
-                               fieldsToInsert.begin(), fieldsToInsert.end());
+  context.workingTable.insert(context.workingTable.end(),
+                              fieldsToInsert.begin(), fieldsToInsert.end());
 }
 
 }  // namespace gql

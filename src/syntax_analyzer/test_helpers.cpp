@@ -270,7 +270,7 @@ static std::string FormatErrorMessage(const char* query,
   std::stringstream str;
   if (e.inputPosition().IsSet()) {
     str << "Error in query at position " << e.inputPosition().line << ":"
-        << e.inputPosition().col << "\n"
+        << e.inputPosition().col + 1 << "\n"
         << FormatErrorMessageInQuery(query, e.inputPosition(), e.message());
   } else {
     str << e.what() << " in query:\n" << query;

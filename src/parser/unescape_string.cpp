@@ -18,7 +18,7 @@
 
 #define GQL_ASSERT(condition) assert(condition)
 
-namespace gql::parser::ast_builder {
+namespace gql::parser {
 
 inline void Utf32ToUtf8(char* buffer, unsigned ch32) {
   int i = 0;
@@ -137,4 +137,4 @@ std::string UnescapeQuotedCharacterSequence(const std::string& str) {
   return unescaped;
 }
 
-}  // namespace gql::parser::ast_builder
+}  // namespace gql::parser

@@ -962,33 +962,31 @@ GQL_AST_VALUE(AsteriskValue)
 // returnStatementBody
 //    : setQuantifier? (ASTERISK | returnItemList) groupByClause?
 //    | NO BINDINGS
-struct ReturnStatementBody : NodeBase<ReturnStatementBody> {
+
+// returnStatement
+//    : RETURN returnStatementBody
+
+// Holds following <primitive result statement> option:
+//    : returnStatement orderByAndPageStatement?
+struct ResultStatement : NodeBase<ResultStatement> {
   SetQuantifier quantifier = SetQuantifier::ALL;  // ALL is implicit value.
   std::optional<ReturnItemList>
       items;  // Not set means ASTERISK; empty list means NO BINDINGS
               // Asterisk rewrite may make |items| non-optional.
   GroupingElementList groupBy;  // GQ15 feature
+  std::optional<OrderByAndPageStatement> orderByAndPage;
 };
-GQL_AST_STRUCT(ReturnStatementBody, quantifier, items, groupBy)
-
-// returnStatement
-//    : RETURN returnStatementBody
-using ReturnStatement = ReturnStatementBody;
+GQL_AST_STRUCT(ResultStatement, quantifier, items, groupBy, orderByAndPage)
 
 // primitiveResultStatement
 //    : returnStatement orderByAndPageStatement?
 //    | FINISH
 struct PrimitiveResultStatement : NodeBase<PrimitiveResultStatement> {
-  struct Return {
-    ReturnStatement stmt;
-    std::optional<OrderByAndPageStatement> orderByAndPage;
-  };
-  std::variant<FinishValue, Return> option;
+  std::variant<FinishValue, ResultStatement> option;
 
   bool MaybeNotSet() const { return option.index() == 0; }
 };
 GQL_AST_STRUCT(PrimitiveResultStatement, option)
-GQL_AST_STRUCT(PrimitiveResultStatement::Return, stmt, orderByAndPage)
 
 // selectItemAlias
 //    : AS identifier

@@ -42,7 +42,7 @@ SyntaxAnalyzer::SyntaxAnalyzer(const Config* config)
     config_.supportedPropertyTypes = {
         MakeValueType(ast::StringType::Kind::CHAR),
         MakeValueType(ast::SimplePredefinedType::Boolean),
-        MakeValueType(ast::SimpleNumericType::Int64),
+        MakeValueType(ast::BinaryExactNumericType{/* isSigned= */ true, 63}),
         MakeValueType(ast::SimpleNumericType::Double),
         MakeValueType(
             ast::ScaleNumericType{ast::ScaleNumericType::Type::Float})};
@@ -54,7 +54,7 @@ void SyntaxAnalyzer::ThrowIfFeatureNotSupported(standard::Feature feature,
   if (!unsupportedFeatures_[static_cast<int>(feature)])
     return;
 
-  throw UnsupportedFeatureError(feature, node);
+  throw UnsupportedFeatureError(feature, node.inputPosition());
 }
 
 namespace {
@@ -101,8 +101,8 @@ struct IsCastableVisitor {
     return src == dest;
   }
 
-  bool operator()(const ast::BinaryExactUserNumericType& src,
-                  const ast::BinaryExactUserNumericType& dest) const {
+  bool operator()(const ast::BinaryExactNumericType& src,
+                  const ast::BinaryExactNumericType& dest) const {
     return src == dest;
   }
 
@@ -133,11 +133,7 @@ struct IsCastableVisitor {
 
   bool operator()(const ast::ValueType::List& src,
                   const ast::ValueType::List& dest) const {
-    return Visit(src.valueType ? **src.valueType
-                               : MakeValueType(ast::SimplePredefinedType::Any),
-                 dest.valueType
-                     ? **dest.valueType
-                     : MakeValueType(ast::SimplePredefinedType::Any));
+    return Visit(*src.valueType, *dest.valueType);
   }
 
   bool operator()(const ast::RecordType& src,

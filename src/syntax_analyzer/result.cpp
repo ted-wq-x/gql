@@ -24,20 +24,22 @@
 
 namespace gql {
 
-void SyntaxAnalyzer::Process(ast::PrimitiveResultStatement& result,
-                             ExecutionContext& context) {
-  ast::variant_switch(
-      result.option, [&](const ast::FinishValue&) {},
-      [&](ast::PrimitiveResultStatement::Return& statement) {
+SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
+    ast::PrimitiveResultStatement& result,
+    ExecutionContext& context) {
+  return ast::variant_switch(
+      result.option,
+      [&](const ast::FinishValue&) { return OptBindingTableType{}; },
+      [&](ast::ResultStatement& statement) -> OptBindingTableType {
         auto origContext = context.MakeCopy();
 
-        statement.stmt = Rewrite(statement.stmt, context);
-        Process(statement.stmt, context);
+        statement = Rewrite(statement, context);
+        Process(statement, context);
         if (statement.orderByAndPage &&
             !statement.orderByAndPage->orderBy.empty()) {
           Process(*statement.orderByAndPage, context);
           // Rewrite above made return item list non-optional.
-          const ast::ReturnItemList& returnItemList = *statement.stmt.items;
+          const ast::ReturnItemList& returnItemList = *statement.items;
           for (auto& sortItem : statement.orderByAndPage->orderBy) {
             if (auto* bindingVar = std::get_if<ast::BindingVariableReference>(
                     &sortItem.sortKey.option)) {
@@ -78,19 +80,20 @@ void SyntaxAnalyzer::Process(ast::PrimitiveResultStatement& result,
           auto rewrittenOrderBy = RewriteOrderByClause(statement, context);
           // Processing rewritten statement shouldn't be necessary, but we do it
           // anyway to check for errors in the code.
-          Process(rewrittenOrderBy.stmt, origContext);
+          Process(rewrittenOrderBy, origContext);
           Process(*rewrittenOrderBy.orderByAndPage, origContext);
           if (config_.rewriteResultOrderByClause) {
             statement = std::move(rewrittenOrderBy);
           }
         }
+        return context.workingTable;
       });
 }
 
 // Rewrite asterisk to the list of all columns and assign explicit aliases for
 // all return items.
-ast::ReturnStatement SyntaxAnalyzer::Rewrite(
-    const ast::ReturnStatement& retStatement,
+ast::ResultStatement SyntaxAnalyzer::Rewrite(
+    const ast::ResultStatement& retStatement,
     const ExecutionContext& context) const {
   auto newRetStatement = retStatement;
   if (!retStatement.items) {
@@ -131,7 +134,7 @@ ast::ReturnStatement SyntaxAnalyzer::Rewrite(
   return newRetStatement;
 }
 
-void SyntaxAnalyzer::Process(ast::ReturnStatement& retStatement,
+void SyntaxAnalyzer::Process(ast::ResultStatement& retStatement,
                              ExecutionContext& context) {
   if (!retStatement.groupBy.empty()) {
     ThrowIfFeatureNotSupported(standard::Feature::GQ15,
@@ -171,16 +174,16 @@ void SyntaxAnalyzer::Process(ast::ReturnStatement& retStatement,
     }
   }
 
-  auto nonGroupingItemContext = context.MakeCopy();
-  nonGroupingItemContext.workingTable.erase(
-      std::remove_if(nonGroupingItemContext.workingTable.begin(),
-                     nonGroupingItemContext.workingTable.end(),
+  auto aggregatingItemContext = context.MakeCopy();
+  aggregatingItemContext.workingTable.erase(
+      std::remove_if(aggregatingItemContext.workingTable.begin(),
+                     aggregatingItemContext.workingTable.end(),
                      [&groupCols](const ast::FieldType& field) {
                        return groupCols.count(field.name.name);
                      }),
-      nonGroupingItemContext.workingTable.end());
+      aggregatingItemContext.workingTable.end());
   for (auto& col : groupCols) {
-    auto& newField = nonGroupingItemContext.workingRecord.emplace_back();
+    auto& newField = aggregatingItemContext.workingRecord.emplace_back();
     newField.name.name = col.first;
     newField.type = col.second;
   }
@@ -194,7 +197,7 @@ void SyntaxAnalyzer::Process(ast::ReturnStatement& retStatement,
       newField.type = groupColIt->second;
     } else {
       newField.type = ProcessAggregatingValueExpression(item.aggregate,
-                                                        nonGroupingItemContext);
+                                                        aggregatingItemContext);
     }
   }
   context.workingTable = std::move(outWorkingTable);
@@ -244,26 +247,26 @@ struct BindingVariableWithoutAggregateFunctionVisitor {
 }  // namespace
 
 // 14.10 Syntax Rule 4.c.i.A
-ast::PrimitiveResultStatement::Return SyntaxAnalyzer::RewriteOrderByClause(
-    const ast::PrimitiveResultStatement::Return& origStatement,
+ast::ResultStatement SyntaxAnalyzer::RewriteOrderByClause(
+    const ast::ResultStatement& origStatement,
     const ExecutionContext& context) const {
   auto statement = origStatement;
   auto& orderBy = statement.orderByAndPage->orderBy;
 
   std::unordered_set<std::string> returnIds, orderRefs;
-  for (auto& retItem : *statement.stmt.items) {
+  for (auto& retItem : *statement.items) {
     returnIds.insert(retItem.alias->name);
   }
   orderRefs = returnIds;
 
   bool retItemContainsAggregateFunction =
-      ast::FindFirstNodeOfType<ast::AggregateFunction>(*statement.stmt.items) !=
+      ast::FindFirstNodeOfType<ast::AggregateFunction>(*statement.items) !=
       nullptr;
-  if (!statement.stmt.groupBy.empty()) {
-    for (auto& groupItem : statement.stmt.groupBy) {
+  if (!statement.groupBy.empty()) {
+    for (auto& groupItem : statement.groupBy) {
       orderRefs.insert(groupItem.name);
     }
-  } else if (statement.stmt.quantifier != ast::SetQuantifier::DISTINCT &&
+  } else if (statement.quantifier != ast::SetQuantifier::DISTINCT &&
              !retItemContainsAggregateFunction) {
     for (auto& f : context.workingTable) {
       orderRefs.insert(f.name.name);
@@ -277,7 +280,7 @@ ast::PrimitiveResultStatement::Return SyntaxAnalyzer::RewriteOrderByClause(
   // without an intervening instance of <procedure body>.
   const bool retItemContainsAggregateFunctionWithoutProcedureBody =
       detail::FindDirectlyContainedDescendant<ast::AggregateFunction>(
-          *statement.stmt.items);
+          *statement.items);
 
   int lastGeneratedId = 0;
   auto generateId = [&lastGeneratedId]() {
@@ -297,14 +300,14 @@ ast::PrimitiveResultStatement::Return SyntaxAnalyzer::RewriteOrderByClause(
 
     if (ast::FindFirstNodeOfType<ast::AggregateFunction>(sortItem.sortKey)) {
       // 14.10 Syntax Rule 4.c.i.A.V
-      if (statement.stmt.groupBy.empty() ||
+      if (statement.groupBy.empty() ||
           !retItemContainsAggregateFunctionWithoutProcedureBody) {
         throw FormattedError(sortItem.sortKey, ErrorCode::E0028,
                              "Sort key cannot contain aggregate function");
       }
 
       auto alias = generateId();
-      auto& newRetItem = statement.stmt.items->emplace_back();
+      auto& newRetItem = statement.items->emplace_back();
       newRetItem.alias.emplace().name = alias;
       sortItem.sortKey.option.emplace<ast::BindingVariableReference>().name =
           alias;
@@ -314,7 +317,7 @@ ast::PrimitiveResultStatement::Return SyntaxAnalyzer::RewriteOrderByClause(
   // 14.10 Syntax Rule 4.c.i.A.VIII
   for (auto& item : orderRefs) {
     if (returnIds.count(item) == 0) {
-      auto& newRetItem = statement.stmt.items->emplace_back();
+      auto& newRetItem = statement.items->emplace_back();
       newRetItem.alias.emplace().name = item;
       newRetItem.aggregate.option.emplace<ast::BindingVariableReference>()
           .name = item;

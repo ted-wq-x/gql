@@ -33,6 +33,13 @@ inline ast::ValueType MakeValueType(ast::StringType::Kind kind,
   return MakeValueType(stringType, notNull);
 }
 
+inline ast::ValueType MakeValueTypeUInt64(bool notNull = true) {
+  ast::BinaryExactNumericType numericType;
+  numericType.isSigned = false;
+  numericType.precision = 64;
+  return MakeValueType(numericType, notNull);
+}
+
 const ast::FieldType* HasField(const ast::FieldTypeList&, const std::string&);
 ast::FieldType* HasField(ast::FieldTypeList&, const std::string&);
 
@@ -48,7 +55,8 @@ ast::FieldTypeList CombineColumns(const ast::FieldTypeList&,
 // Implements check in 14.2 Syntax Rule 10.a.vii.1
 void AssertComparableTypesInFields(const ast::FieldTypeList&, const ast::Node&);
 void AssertColumnNameEqual(const ast::FieldTypeList&,
-                           const ast::FieldTypeList&);
+                           const ast::FieldTypeList&,
+                           const ast::Node&);
 
 void AssertGraphElementReferenceType(const ast::ValueType&, const ast::Node&);
 void AssertNodeReferenceType(const ast::ValueType&, const ast::Node&);

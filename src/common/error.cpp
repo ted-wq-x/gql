@@ -25,7 +25,7 @@ std::string FormatParserError(ast::InputPosition inputPosition,
                               const std::string& msg) {
   std::stringstream str;
   if (inputPosition.IsSet()) {
-    str << "At line " << inputPosition.line << ":" << inputPosition.col;
+    str << "At line " << inputPosition.line << ":" << inputPosition.col + 1;
   } else {
     str << "At unknown position";
   }
@@ -61,9 +61,9 @@ ParserError::ParserError(ast::InputPosition inputPosition,
       msg_(msg) {}
 
 UnsupportedFeatureError::UnsupportedFeatureError(standard::Feature feature,
-                                                 const ast::Node& node)
+                                                 ast::InputPosition pos)
     : ParserError(
-          node.inputPosition(),
+          pos,
           ErrorCode::UnsupportedFeature,
           fmt::format(GetFormatString(ErrorCode::UnsupportedFeature,
                                       "Unsupported feature {0} \"{1}\""),

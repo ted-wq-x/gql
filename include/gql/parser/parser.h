@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <unordered_set>
+
 #include "gql/ast/ast.h"
 #include "gql/error.h"
 #include "gql/gql_export.h"
@@ -22,9 +24,17 @@ namespace gql::parser {
 
 class ParserCache;
 
+struct ParserConfig {
+  std::unordered_set<standard::Feature> unsupportedFeatures;
+  int binaryIntPrecision = 32;
+  int binarySmallIntPrecision = 12;
+  int binaryBigIntPrecision = 64;
+};
+
 // Throws ParserError exception on error.
 // If cache is nullptr, the parser will use cache in static memory.
 GQL_EXPORT ast::GQLProgram ParseProgram(const char* query,
+                                        const ParserConfig& = {},
                                         ParserCache* cache = nullptr);
 
 // Antlr4 part of the parser heavily relies on cache to speed up parsing.
@@ -39,7 +49,9 @@ class GQL_EXPORT ParserCache {
   struct Impl;
   std::unique_ptr<Impl> impl_;
 
-  friend ast::GQLProgram ParseProgram(const char* query, ParserCache* cache);
+  friend ast::GQLProgram ParseProgram(const char*,
+                                      const ParserConfig&,
+                                      ParserCache*);
 };
 
 }  // namespace gql::parser

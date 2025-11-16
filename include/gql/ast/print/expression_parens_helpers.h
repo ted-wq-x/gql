@@ -55,7 +55,7 @@ struct BooleanPrimaryRequiresParens {
 };
 
 struct BooleanTestRequiresParens {
-  bool operator()(const ast::ValueExpression::Is&) { return false; }
+  bool operator()(const ast::ValueExpression::BooleanTest&) { return false; }
 
   template <class T>
   bool operator()(const T& v) {

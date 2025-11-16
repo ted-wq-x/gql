@@ -79,7 +79,7 @@ void CheckInputPositions(const NodeType& node,
       if (!ignorePositionOrder && node.inputPosition() < minStart) {
         ADD_FAILURE() << "Node " << node.inputPosition().line << ":"
                       << node.inputPosition().col << " is before "
-                      << minStart.line << ":" << minStart.col;
+                      << minStart.line << ":" << minStart.col + 1;
       } else {
         minStart = node.inputPosition();
       }
