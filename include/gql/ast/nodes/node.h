@@ -26,6 +26,7 @@ struct InputPosition {
   InputPosition() = default;
   InputPosition(size_t line, size_t col) : line(line), col(col) {}
 
+  // |line| is 1-based, |col| is 0-based
   size_t line = std::numeric_limits<size_t>::max();
   size_t col = std::numeric_limits<size_t>::max();
 

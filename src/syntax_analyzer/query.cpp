@@ -68,7 +68,6 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
   bool firstQuery = true;
   for (auto& query : stmt.queries) {
     auto childContext = context.MakeCopy();
-    // TODO: What about childContext?
     Process(query, childContext);
     if (firstQuery) {
       combinedTable = childContext.workingTable;
@@ -232,7 +231,7 @@ void SyntaxAnalyzer::Process(ast::ForStatement& statement,
     }
   }
 
-  BindingTableType outWorkingTable = context.workingRecord;
+  BindingTableType outWorkingTable = context.workingTable;
   if (statement.ordinalityOrOffset) {
     if (statement.ordinalityOrOffset->var.name == statement.alias.name) {
       throw FormattedError(statement.ordinalityOrOffset->var, ErrorCode::E0056,

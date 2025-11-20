@@ -363,6 +363,19 @@ struct ASTBuilder {
       value.name = str;
   }
 
+  void ProcessBooleanLiteral(antlr4::Token* token, ast::TruthValue& value) {
+    auto valueStr = token->getText();
+    std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    if (valueStr == "true") {
+      value = ast::TruthValue::TRUE;
+    } else if (valueStr == "false") {
+      value = ast::TruthValue::FALSE;
+    } else {
+      value = ast::TruthValue::UNKNOWN;
+    }
+  }
+
   void BuildAST(GQLParser::ReferenceParameterSpecificationContext* ctx,
                 ast::ReferenceParameterSpecification& value) {
     AssignInputPosition(ctx, value);
@@ -402,8 +415,9 @@ struct ASTBuilder {
 
   void BuildAST(GQLParser::GeneralLiteralContext* ctx,
                 ast::GeneralLiteral& value) {
-    if (ctx->BOOLEAN_LITERAL()) {
-      value = ast::TruthValue();
+    if (auto ctx2 = ctx->BOOLEAN_LITERAL()) {
+      ProcessBooleanLiteral(ctx2->getSymbol(),
+                            value.emplace<ast::TruthValue>());
     } else if (auto ctx2 = ctx->characterStringLiteral()) {
       BuildAST(ctx2, value.emplace<ast::CharacterStringLiteral>());
     } else if (auto ctx2 = ctx->BYTE_STRING_LITERAL()) {
@@ -3844,14 +3858,8 @@ void ASTBuilder::BuildAST(GQLParser::ValueExpressionContext* ctx,
     auto& value2 = value.option.emplace<ast::ValueExpression::BooleanTest>();
     BuildAST(ctx2->valueExpression(), *value2.expr);
     value2.isNot = ctx2->NOT() != nullptr;
-    auto truthValue = ctx2->truthValue()->BOOLEAN_LITERAL()->getText();
-    if (truthValue == "TRUE") {
-      value2.value = ast::TruthValue::TRUE;
-    } else if (truthValue == "FALSE") {
-      value2.value = ast::TruthValue::FALSE;
-    } else {
-      value2.value = ast::TruthValue::UNKNOWN;
-    }
+    ProcessBooleanLiteral(ctx2->truthValue()->BOOLEAN_LITERAL()->getSymbol(),
+                          value2.value);
   } else if (auto ctx2 = dynamic_cast<GQLParser::NotExprAltContext*>(ctx)) {
     auto& value2 = value.option.emplace<ast::ValueExpression::Unary>();
     BuildAST(ctx2->valueExpression(), *value2.expr);

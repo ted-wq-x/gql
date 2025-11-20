@@ -27,6 +27,9 @@ struct SyntaxAnalyzerConfig {
   bool rewriteResultOrderByClause = false;
   bool rewriteLetStatement = true;
   bool rewriteOptionalMatchStatement = true;
+  bool rewriteSimpleCase = false;
+  bool rewriteNullIfCase = false;
+  bool rewriteCoalesceCase = false;
 
   // Following rewrites are required, only disable them is they were already
   // applied.

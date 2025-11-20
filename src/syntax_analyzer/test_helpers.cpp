@@ -60,7 +60,16 @@ Field& Field::EdgeReference() {
 }
 
 Field& Field::NodeReferenceGroup() {
-  // TODO: Implement group type check
+  checks_.push_back([](const ast::ValueType& type) -> std::string {
+    if (auto* listType = std::get_if<ast::ValueType::List>(&type.typeOption)) {
+      if (listType->isGroup &&
+          std::holds_alternative<ast::NodeReferenceValueType>(
+              listType->valueType->typeOption)) {
+        return {};
+      }
+    }
+    return "Expected node reference group";
+  });
   return *this;
 }
 

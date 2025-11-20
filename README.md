@@ -168,6 +168,28 @@ it is being developed to achieve maximum compliance with the ISO/IEC 39075:2024 
 
 The Sample Queries section on the website aims to progressively demonstrate all GQL language features.
 
+## Current Status
+
+### Parser and AST
+The AST and parser components are production-ready with no known bugs. They provide complete coverage of the GQL language syntax as defined in ISO/IEC 39075:2024.
+
+### Syntax Analyzer
+The Syntax Analyzer is under active development. Current status:
+- **Well-supported**: Query statements and graph patterns
+- **In progress**: Value expressions and value handling
+- **Ongoing**: Reliability improvements and comprehensive testing
+
+The goal is to implement 100% of the Syntax Rules specified in the ISO/IEC 39075:2024 standard.
+
+### GQLLab.com Backend
+The execution engine powering [GQLLab.com](https://ide.gqllab.com) is in active development and not yet published. This implementation prioritizes:
+- **Standards compliance**: Full adherence to ISO/IEC 39075:2024
+- **Maintainability**: Clear, readable code over optimization
+- **Educational value**: Demonstrating language features comprehensively
+
+Note that this implementation intentionally trades some optional features and performance for simplicity and standard compliance. 
+
+
 ## License
 
 This library is distributed under the Apache License 2.0.

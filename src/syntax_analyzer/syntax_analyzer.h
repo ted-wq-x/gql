@@ -198,7 +198,7 @@ class SyntaxAnalyzer {
   ast::ValueType Process(ast::PathValueConstructor&, const ExecutionContext&);
   ast::ValueType Process(ast::PropertyReference&, const ExecutionContext&);
   ast::ValueType Process(ast::CaseExpression&, const ExecutionContext&);
-  ast::ValueType Process(ast::SimpleCase&, const ExecutionContext&);
+  ast::SearchedCase Rewrite(ast::SimpleCase&, const ExecutionContext&);
   ast::ValueType Process(ast::SearchedCase&, const ExecutionContext&);
   ast::ValueType Process(ast::CastSpecification&, const ExecutionContext&);
   ast::ValueType Process(ast::ElementIdFunction&, const ExecutionContext&);

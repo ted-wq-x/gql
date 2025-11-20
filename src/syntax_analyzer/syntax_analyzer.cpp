@@ -38,14 +38,12 @@ SyntaxAnalyzer::SyntaxAnalyzer(const Config* config)
   }
   if (config_.supportedPropertyTypes.empty()) {
     // 24.2.3 Minimum conformance
-    // TODO: Check types
+    // INT64 and DOUBLE are used instead of INT and FLOAT required by standard.
     config_.supportedPropertyTypes = {
         MakeValueType(ast::StringType::Kind::CHAR),
         MakeValueType(ast::SimplePredefinedType::Boolean),
         MakeValueType(ast::BinaryExactNumericType{/* isSigned= */ true, 63}),
-        MakeValueType(ast::SimpleNumericType::Double),
-        MakeValueType(
-            ast::ScaleNumericType{ast::ScaleNumericType::Type::Float})};
+        MakeValueType(ast::SimpleNumericType::Double)};
   }
 }
 
