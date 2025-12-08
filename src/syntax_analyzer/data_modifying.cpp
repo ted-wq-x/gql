@@ -41,7 +41,7 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
   return ast::variant_switch(
       dataModifyingStmt.option,
       [&](ast::LinearDataModifyingStatementBody& statement) {
-        return Process(statement, context);
+        return ProcessAndSaveType(statement, context);
       },
       [&](ast::ProcedureBody& statement) -> OptBindingTableType {
         Process(statement, CallProcedureKind::DataModifying, context);
@@ -81,6 +81,8 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
       statement,
       [&](ast::InsertStatement& statement) { Process(statement, context); },
       [&](ast::SetStatement& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
+
         std::unordered_set<std::string> setAllVars;
         std::set<std::pair<std::string, std::string>> setProps;
         auto childContext = context.MakeAmended();
@@ -125,16 +127,22 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
               });
         }
       },
-      [&](const ast::RemoveStatement& statement) {
+      [&](ast::RemoveStatement& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
+
         auto childContext = context.MakeAmended();
-        for (const auto& item : statement.items) {
+        for (auto& item : statement.items) {
           ast::variant_switch(
               item,
-              [&](const ast::RemovePropertyItem& statement) {
+              [&](ast::RemovePropertyItem& statement) {
+                ContextStateSaver contextStateSaver(statement, context);
+
                 AssertGraphElementReferenceType(
                     Process(statement.var, childContext), statement.var);
               },
-              [&](const ast::RemoveLabelItem& statement) {
+              [&](ast::RemoveLabelItem& statement) {
+                ContextStateSaver contextStateSaver(statement, context);
+
                 ThrowIfFeatureNotSupported(standard::Feature::GD02, statement);
 
                 AssertGraphElementReferenceType(
@@ -143,6 +151,8 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
         }
       },
       [&](ast::DeleteStatement& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
+
         auto childContext = context.MakeAmended();
         for (auto& item : statement.items) {
           if (!std::holds_alternative<ast::BindingVariableReference>(
@@ -162,6 +172,8 @@ void SyntaxAnalyzer::Process(ast::PrimitiveDataModifyingStatement& statement,
 
 void SyntaxAnalyzer::Process(ast::InsertStatement& statement,
                              ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(statement, context);
+
   std::vector<ast::FieldType> fieldsToInsert;
 
   auto processProperties = [&](ast::PropertyKeyValuePairList& props) {

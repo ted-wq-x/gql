@@ -8,7 +8,9 @@ It requires C++17 or later and is distributed under the Apache License 2.0.
 - [GQL Parser and AST](#gql-parser-and-ast) 
 - [GQL Syntax Analyzer](#gql-syntax-analyzer)
 - [Build](#build)
+- [GQL Demo Application](#gql-demo-application)
 - [GQLLab.com Interactive Environment](#gqllabcom-interactive-environment)
+- [Current Status](#current-status)
 - [License](#license)
 
 ## GQL Parser and AST
@@ -138,7 +140,7 @@ void analyze_query(const char* query) {
     gql::ast::GQLProgram program = gql::parser::ParseProgram(query);
     gql::SyntaxAnalyzerConfig config;
     gql::AnalyzeSyntax(program, config);
-  } catch (const gql::parser::ParserError& e) {
+  } catch (const gql::ParserError& e) {
     std::cerr << "Error: " << e.what() << std::endl;
   }
 }
@@ -158,6 +160,10 @@ make
 ```
 
 If your project does not use CMake, you can manually include the library sources in your build system with minimal effort.
+
+## GQL Demo Application
+
+The GQL Demo application (located in `src/demo`) demonstrates how to use the AST and Syntax Analyzer components to build a GQL server implementation. While the AST and Syntax Analyzer components aim for full standard compliance, the set of features implemented in GQL Demo is limited. The GQL Demo code prioritizes readability and brevity over performance - it is not intended for production use and is not optimized. GQL Demo serves as the backend for [GQLLab.com](https://ide.gqllab.com).
 
 ## GQLLab.com Interactive Environment
 
@@ -181,8 +187,8 @@ The Syntax Analyzer is under active development. Current status:
 
 The goal is to implement 100% of the Syntax Rules specified in the ISO/IEC 39075:2024 standard.
 
-### GQLLab.com Backend
-The execution engine powering [GQLLab.com](https://ide.gqllab.com) is in active development and not yet published. This implementation prioritizes:
+### Demo application and GQLLab.com Backend
+Demo application is in active development. This implementation prioritizes:
 - **Standards compliance**: Full adherence to ISO/IEC 39075:2024
 - **Maintainability**: Clear, readable code over optimization
 - **Educational value**: Demonstrating language features comprehensively

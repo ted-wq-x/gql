@@ -91,6 +91,8 @@ void SyntaxAnalyzer::Process(ast::CompositeQueryPrimary& query,
   ast::variant_switch(
       query,
       [&](ast::LinearQueryStatementOption& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
+
         ast::variant_switch(
             statement.statements,
             [&](ast::SimpleLinearQueryStatement& statement) {
@@ -113,6 +115,8 @@ void SyntaxAnalyzer::Process(ast::CompositeQueryPrimary& query,
         (void)Process(statement.result, context);
       },
       [&](ast::NestedQuerySpecification& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
+
         if (statement.useGraph) {
           ThrowIfFeatureNotSupported(standard::Feature::GQ01,
                                      *statement.useGraph);
@@ -124,6 +128,8 @@ void SyntaxAnalyzer::Process(ast::CompositeQueryPrimary& query,
         Process(statement.procedure, CallProcedureKind::Query, context);
       },
       [&](ast::FocusedPrimitiveResultStatement& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
+
         ThrowIfFeatureNotSupported(standard::Feature::GQ01, statement);
 
         ProcessFallback(statement.useGraph, context);
@@ -164,7 +170,9 @@ void SyntaxAnalyzer::Process(ast::SimpleQueryStatement& simpleStmt,
               }
             });
       },
-      [&](const ast::LetStatement& statement) {
+      [&](ast::LetStatement& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
+
         ThrowIfFeatureNotSupported(standard::Feature::GQ09, statement);
 
         ast::SimpleQueryStatement newSimpleStmt = Rewrite(statement, context);
@@ -175,6 +183,7 @@ void SyntaxAnalyzer::Process(ast::SimpleQueryStatement& simpleStmt,
       },
       [&](ast::ForStatement& statement) { Process(statement, context); },
       [&](ast::FilterStatement& statement) {
+        ContextStateSaver contextStateSaver(statement, context);
         ThrowIfFeatureNotSupported(standard::Feature::GQ08, statement);
 
         auto childContext = context.MakeAmended();
@@ -223,6 +232,8 @@ ast::CallProcedureStatement SyntaxAnalyzer::Rewrite(
 
 void SyntaxAnalyzer::Process(ast::ForStatement& statement,
                              ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(statement, context);
+
   if (statement.ordinalityOrOffset) {
     if (statement.ordinalityOrOffset->isOrdinality) {
       ThrowIfFeatureNotSupported(standard::Feature::GQ11, statement);

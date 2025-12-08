@@ -113,13 +113,18 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
           isInsideReadOnlyTransaction_ = true;
         }
         if (transaction.procedure) {
-          outcome =
-              Process(*transaction.procedure, CallProcedureKind::Any, context);
+          outcome = ProcessAndSaveType(*transaction.procedure, context,
+                                       CallProcedureKind::Any);
         }
       });
   if (program.sessionCloseCommand) {
     outcome.reset();
   }
+#ifndef NDEBUG
+  if (outcome.has_value()) {
+    program.debugExecutionOutcomeType.emplace() = *outcome;
+  }
+#endif
   return outcome;
 }
 

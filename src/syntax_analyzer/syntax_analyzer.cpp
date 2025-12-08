@@ -215,4 +215,16 @@ SyntaxAnalyzer::ExecutionContext::MakeCopyForProcedureBody() const {
   return newContext;
 }
 
+#ifndef NDEBUG
+SyntaxAnalyzer::ContextStateSaver::ContextStateSaver(
+    syntax_analyzer::NodeBase& node,
+    const ExecutionContext& context)
+    : node_(node), context_(context) {}
+
+SyntaxAnalyzer::ContextStateSaver::~ContextStateSaver() {
+  node_.debugTableType.emplace() = context_.workingTable;
+  node_.debugOutgoingWorkingRecordType.emplace() = context_.workingRecord;
+}
+#endif  // !NDEBUG
+
 }  // namespace gql

@@ -21,6 +21,8 @@ namespace gql {
 
 void SyntaxAnalyzer::Process(ast::LinearCatalogModifyingStatement& statement,
                              ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(statement, context);
+
   if (isInsideReadOnlyTransaction_) {
     throw FormattedError(
         statement, ErrorCode::E0010,

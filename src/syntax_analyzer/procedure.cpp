@@ -163,8 +163,8 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
   while (true) {
     try {
       auto contextClone = context.MakeCopy();
-      resultType = Process(*procDef.statements.firstStatement, detectedKind,
-                           contextClone);
+      resultType = ProcessAndSaveType(*procDef.statements.firstStatement,
+                                      contextClone, detectedKind);
       context = std::move(contextClone);
       break;
     } catch (StatementRewriteException e) {
@@ -191,7 +191,8 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
     while (true) {
       try {
         auto contextClone = context.MakeCopy();
-        resultType = Process(*stmtIt->statement, detectedKind, contextClone);
+        resultType =
+            ProcessAndSaveType(*stmtIt->statement, contextClone, detectedKind);
         context = std::move(contextClone);
         break;
       } catch (StatementRewriteException e) {
@@ -336,7 +337,7 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
             throw FormattedError(statement, ErrorCode::E0076,
                                  "Unexpected data-modifying statement");
         }
-        return Process(statement, context);
+        return ProcessAndSaveType(statement, context);
       },
       [&](ast::CompositeQueryStatement& statement) -> OptBindingTableType {
         // Execute composite query statement
@@ -349,19 +350,21 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
                                  "Unexpected query statement");
         }
 
-        return Process(statement, context);
+        return ProcessAndSaveType(statement, context);
       });
 }
 
 void SyntaxAnalyzer::Process(ast::CallProcedureStatement& callProc,
                              CallProcedureKind kind,
                              ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(callProc, context);
+
   auto childContext = context.MakeAmended();
   OptBindingTableType procResultType;
   ast::variant_switch(
       callProc.call,
       [&](ast::InlineProcedureCall& statement) {
-        procResultType = Process(statement, kind, childContext);
+        procResultType = ProcessAndSaveType(statement, childContext, kind);
       },
       [&](const ast::NamedProcedureCall& statement) {
         ThrowIfFeatureNotSupported(standard::Feature::GP04, statement);
@@ -418,7 +421,7 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
     context.workingRecord = std::move(newWorkingRecord);
   }
 
-  return Process(*statement.spec, kind, context);
+  return ProcessAndSaveType(*statement.spec, context, kind);
 }
 
 SyntaxAnalyzer::BindingTableType SyntaxAnalyzer::Process(

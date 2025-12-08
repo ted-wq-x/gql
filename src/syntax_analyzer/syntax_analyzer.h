@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <initializer_list>
 #include <stack>
 #include <unordered_map>
+#include <utility>
 
 #include "gql/ast/algorithm.h"
 #include "gql/ast/ast.h"
@@ -51,6 +51,7 @@ class SyntaxAnalyzer {
   enum class CallProcedureKind { Any, Query, DataModifying, CatalogModifying };
 
   class ExecutionContext;
+  class ContextStateSaver;
   struct StatementRewriteException;
 
   void ThrowIfFeatureNotSupported(standard::Feature, const ast::Node&) const;
@@ -236,6 +237,9 @@ class SyntaxAnalyzer {
   std::vector<bool> unsupportedFeatures_;
   bool isInsideReadOnlyTransaction_ = false;
 
+  template <typename NodeType, typename... Args>
+  auto ProcessAndSaveType(NodeType&, ExecutionContext&, Args&&...);
+
   template <typename NodeType>
   void ProcessFallback(NodeType&, ExecutionContext&);
 
@@ -294,6 +298,22 @@ class SyntaxAnalyzer::ExecutionContext {
   ExecutionContext& operator=(const ExecutionContext&) = default;
 };
 
+// In Release mode ContextStateSaver does nothing. In Debug mode it saves
+// working table type and working record type to the Node data.
+class SyntaxAnalyzer::ContextStateSaver {
+ public:
+#ifdef NDEBUG
+  ContextStateSaver(syntax_analyzer::NodeBase&, const ExecutionContext&) {}
+#else
+  ContextStateSaver(syntax_analyzer::NodeBase&, const ExecutionContext&);
+  ~ContextStateSaver();
+
+ private:
+  syntax_analyzer::NodeBase& node_;
+  const ExecutionContext& context_;
+#endif
+};
+
 struct SyntaxAnalyzer::StatementRewriteException {
   std::vector<ast::StatementPtr> statements;
 };
@@ -322,6 +342,27 @@ void SyntaxAnalyzer::ProcessFallback(NodeType& node,
           return true;
         });
   }
+}
+
+// In Release mode ProcessAndSaveType just calls Process. In Debug mode it also
+// saves statement declared type and working record type to the Node data.
+template <typename NodeType, typename... Args>
+auto SyntaxAnalyzer::ProcessAndSaveType(NodeType& node,
+                                        ExecutionContext& context,
+                                        Args&&... args) {
+  auto resultType = Process(node, std::forward<Args>(args)..., context);
+#ifndef NDEBUG
+  node.debugOutgoingWorkingRecordType.emplace() = context.workingRecord;
+  if constexpr (std::is_same_v<decltype(resultType),
+                               SyntaxAnalyzer::OptBindingTableType>) {
+    if (resultType) {
+      node.debugTableType.emplace() = *resultType;
+    }
+  } else {
+    node.debugTableType.emplace() = resultType;
+  }
+#endif
+  return resultType;
 }
 
 }  // namespace gql

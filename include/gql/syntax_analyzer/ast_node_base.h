@@ -15,12 +15,16 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
+#include "gql/ast/detail/value_ptr.h"
 #include "gql/ast/nodes/node.h"
 
 namespace gql::ast {
 struct BinarySetFunction;
+struct FieldType;
 struct GeneralSetFunction;
+struct GQLProgram;
 struct GraphPattern;
 struct GraphPatternWhereClause;
 struct ParenthesizedPathPatternWhereClause;
@@ -37,34 +41,64 @@ struct GraphPatternWhereClauseAuxData;
 struct PathVariableReferenceScopeAuxData;
 struct PathPatternAuxData;
 
-struct GraphPatternBase : ast::Node {
+#ifdef NDEBUG
+using NodeBase = ast::Node;
+#else
+using RecordTypePtr = ast::value_ptr<std::vector<ast::FieldType> >;
+
+struct NodeBase : ast::Node {
+  // optional not set here means unknown or "diagnostics not available yet".
+  std::optional<RecordTypePtr> debugOutgoingWorkingRecordType;
+  // Can be statement declared type or type of outgoing working table.
+  std::optional<RecordTypePtr> debugTableType;
+};
+#endif
+
+#ifdef NDEBUG
+using GQLProgramBase = ast::Node;
+#else
+using ExecutionOutcomeType = std::optional<RecordTypePtr>;
+
+struct GQLProgramBase : ast::Node {
+  ExecutionOutcomeType debugExecutionOutcomeType;
+};
+#endif
+
+struct GraphPatternBase : NodeBase {
   std::shared_ptr<const GraphPatternAuxData> auxData;
 };
 
-struct PathPatternBase : ast::Node {
+struct PathPatternBase : NodeBase {
   std::shared_ptr<const PathPatternAuxData> auxData;
 };
 
-struct PathFactorBase : ast::Node {
+struct PathFactorBase : NodeBase {
   std::shared_ptr<const PathVariableReferenceScopeAuxData> auxData;
 };
 
-struct PathPatternExpressionBase : ast::Node {
+struct PathPatternExpressionBase : NodeBase {
   std::shared_ptr<const PathVariableReferenceScopeAuxData> auxData;
 };
 
 // Common base for classes holding expressions in graph pattern.
-struct GraphPatternWhereClauseBase : ast::Node {
+struct GraphPatternWhereClauseBase : NodeBase {
   std::shared_ptr<const GraphPatternWhereClauseAuxData> auxData;
 };
 
-struct AggregateFunctionBase : ast::Node {
+struct AggregateFunctionBase : NodeBase {
   std::shared_ptr<const AggregateFunctionAuxData> auxData;
 };
 
+// |AstNodeBase| metafunction is used to select base type depending on node
+// type.
 template <typename T>
 struct AstNodeBase {
-  using type = ast::Node;
+  using type = NodeBase;
+};
+
+template <>
+struct AstNodeBase<ast::GQLProgram> {
+  using type = syntax_analyzer::GQLProgramBase;
 };
 
 template <>

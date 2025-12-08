@@ -25,6 +25,8 @@ namespace gql {
 
 void SyntaxAnalyzer::Process(ast::SimpleMatchStatement& statement,
                              ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(statement, context);
+
   auto bindingTable = ProcessGraphPatternBindingTable(statement, context);
   // 14.4 Syntax Rule 5
   for (auto& f : bindingTable) {

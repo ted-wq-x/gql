@@ -27,6 +27,8 @@ namespace gql {
 SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
     ast::PrimitiveResultStatement& result,
     ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(result, context);
+
   return ast::variant_switch(
       result.option,
       [&](const ast::FinishValue&) { return OptBindingTableType{}; },
@@ -136,6 +138,8 @@ ast::ResultStatement SyntaxAnalyzer::Rewrite(
 
 void SyntaxAnalyzer::Process(ast::ResultStatement& retStatement,
                              ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(retStatement, context);
+
   if (!retStatement.groupBy.empty()) {
     ThrowIfFeatureNotSupported(standard::Feature::GQ15,
                                retStatement.groupBy.front());
@@ -205,6 +209,8 @@ void SyntaxAnalyzer::Process(ast::ResultStatement& retStatement,
 
 void SyntaxAnalyzer::Process(ast::OrderByAndPageStatement& statement,
                              ExecutionContext& context) {
+  ContextStateSaver contextStateSaver(statement, context);
+
   if (statement.offset) {
     ThrowIfFeatureNotSupported(standard::Feature::GQ12, statement);
   }
