@@ -94,6 +94,14 @@ struct Printer<SessionSetTimeZoneClause> {
 };
 
 template <>
+struct Printer<SessionSetQueryLangClause> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const SessionSetQueryLangClause& v) {
+    os << "QUERY.LANG = " << v.queryLangString;
+  }
+};
+
+template <>
 struct Printer<SessionSetParameterName> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const SessionSetParameterName& v) {

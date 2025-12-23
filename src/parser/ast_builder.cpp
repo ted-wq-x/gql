@@ -3394,6 +3394,12 @@ struct ASTBuilder {
       } else if (auto ctx3 = ctx2->sessionSetValueParameterClause()) {
         BuildAST(ctx3, value2.emplace<ast::SessionSetValueParameterClause>());
       }
+    } else if (auto ctx2 = ctx->sessionSetQueryLangClause()) {
+      auto& value2 = value.emplace<ast::SessionSetQueryLangClause>();
+      AssignInputPosition(ctx2, value2);
+      BuildAST(
+          ctx2->setQueryLangValue()->queryLangString()->characterStringLiteral(),
+          value2.queryLangString);
     }
   }
 
@@ -3413,6 +3419,8 @@ struct ASTBuilder {
         value.arguments = ast::SessionResetArguments::Graph;
       } else if (ctx2->ZONE() != nullptr) {
         value.arguments = ast::SessionResetArguments::TimeZone;
+      } else if (ctx2->QUERY() != nullptr) {
+        value.arguments = ast::SessionResetArguments::QueryLang;
       }
 
       if (auto ctx3 = ctx2->sessionParameterSpecification()) {

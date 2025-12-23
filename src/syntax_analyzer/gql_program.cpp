@@ -62,6 +62,9 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
               },
               [&](ast::SessionSetParameterClause& value) {
                 Process(value, context);
+              },
+              [&](ast::SessionSetQueryLangClause& value) {
+
               });
         }
         for (const auto& resetCmd : value.resetCommands) {

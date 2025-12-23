@@ -116,6 +116,13 @@ struct SessionSetTimeZoneClause : NodeBase<SessionSetTimeZoneClause> {
 };
 GQL_AST_STRUCT(SessionSetTimeZoneClause, timeZoneString)
 
+//sessionSetQueryLangClause
+//    : QUERY PERIOD LANG setQueryLangValue
+struct SessionSetQueryLangClause : NodeBase<SessionSetQueryLangClause> {
+  std::string queryLangString;
+};
+GQL_AST_STRUCT(SessionSetQueryLangClause, queryLangString)
+
 // sessionSetParameterName
 //    : (IF NOT EXISTS)? sessionParameterSpecification
 struct SessionSetParameterName : NodeBase<SessionSetParameterName> {
@@ -193,7 +200,8 @@ using SessionSetCommand =
     std::variant<SessionSetSchemaClause,
                  SessionSetGraphClause,
                  SessionSetTimeZoneClause,  // GS15 feature
-                 SessionSetParameterClause>;
+                 SessionSetParameterClause,
+                 SessionSetQueryLangClause>;
 
 // sessionResetArguments
 //    : ALL? (PARAMETERS | CHARACTERISTICS)
@@ -207,6 +215,7 @@ enum class SessionResetArguments {
   Schema,
   Graph,
   TimeZone,
+  QueryLang,
 };
 
 // sessionResetCommand
