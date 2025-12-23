@@ -2859,9 +2859,6 @@ struct ASTBuilder {
         BuildAST(ctx3, value2.orderByAndPage.emplace());
       }
 
-      if (ctx3->BINDINGS() != nullptr) {
-        value2.items.emplace();
-      }
     } else {
       value.option.emplace<ast::FinishValue>();
     }
@@ -3552,7 +3549,7 @@ void ASTBuilder::BuildAST(GQLParser::ValueTypeContext* ctx,
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ListValueTypeAlt1Context*>(ctx)) {
     auto& value2 = value.typeOption.emplace<ast::ValueType::List>();
-    value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
+    // value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
     BuildAST(ctx2->valueType(), *value2.valueType);
     if (auto ctx3 = ctx2->maxLength()) {
       BuildAST(ctx3->unsignedInteger(), value2.maxLength.emplace());
@@ -3561,7 +3558,7 @@ void ASTBuilder::BuildAST(GQLParser::ValueTypeContext* ctx,
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ListValueTypeAlt2Context*>(ctx)) {
     auto& value2 = value.typeOption.emplace<ast::ValueType::List>();
-    value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
+    // value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
     BuildAST(ctx2->valueType(), *value2.valueType);
     if (auto ctx3 = ctx2->maxLength()) {
       BuildAST(ctx3->unsignedInteger(), value2.maxLength.emplace());
@@ -3570,7 +3567,7 @@ void ASTBuilder::BuildAST(GQLParser::ValueTypeContext* ctx,
   } else if (auto ctx2 =
                  dynamic_cast<GQLParser::ListValueTypeAlt3Context*>(ctx)) {
     auto& value2 = value.typeOption.emplace<ast::ValueType::List>();
-    value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
+    // value2.isGroup = !!ctx2->listValueTypeName()->GROUP();
     value2.valueType->typeOption = ast::SimplePredefinedType::Any;
     if (auto ctx3 = ctx2->maxLength()) {
       BuildAST(ctx3->unsignedInteger(), value2.maxLength.emplace());

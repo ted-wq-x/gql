@@ -377,7 +377,7 @@ GQL_AST_STRUCT(RecordType, fields)
 //     ;
 struct ValueType : NodeBase<ValueType> {
   struct List {
-    bool isGroup = false;
+    bool isGroup = false; //NOTE 306,should not be used by user
     ValueTypePtr valueType;
     std::optional<UnsignedInteger> maxLength;
   };
