@@ -69,7 +69,7 @@ TEST(SyntaxAnalyzer, GraphPattern) {
   GQL_TEST_PARSE("MATCH (a)-(subpath1 = ((b)-){0,3})")
       .ExpectErrorContaining("minimum node count");
   GQL_TEST_PARSE("MATCH ((a)-){0,3} RETURN NO BINDINGS")
-      .ExpectErrorContaining("minimum node count");
+      .ExpectErrorContaining("Parse error extraneous input 'BINDINGS' expecting {<EOF>, 'SESSION'}");
   GQL_TEST_PARSE(
       "MATCH ((A)->((B)->(C) WHERE A.X = B.X + C.X)->(D)){2} RETURN *")
       .ExpectTableResult()
