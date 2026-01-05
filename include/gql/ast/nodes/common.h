@@ -333,4 +333,26 @@ using NonNegativeIntegerSpecification =
                  GeneralParameterReference  // Feature GS16
                  >;
 
+struct PgqColumnName : IdentifierBase, NodeBase<PgqColumnName> {};
+GQL_AST_STRUCT(PgqColumnName, name)
+
+struct PgqDynamicLabelColumnName : IdentifierBase,
+                                   NodeBase<PgqDynamicLabelColumnName> {};
+GQL_AST_STRUCT(PgqDynamicLabelColumnName, name)
+
+struct PgqDynamicPropertiesColumnName
+    : IdentifierBase,
+      NodeBase<PgqDynamicPropertiesColumnName> {};
+GQL_AST_STRUCT(PgqDynamicPropertiesColumnName, name)
+
+struct PgqElementAliasReference : IdentifierBase,
+                                  NodeBase<PgqElementAliasReference> {};
+GQL_AST_STRUCT(PgqElementAliasReference, name)
+
+struct PgqElementName : IdentifierBase, NodeBase<PgqElementName> {};
+GQL_AST_STRUCT(PgqElementName, name)
+
+struct PgqAlias : IdentifierBase, NodeBase<PgqAlias> {};
+GQL_AST_STRUCT(PgqAlias, name)
+
 }  // namespace gql::ast

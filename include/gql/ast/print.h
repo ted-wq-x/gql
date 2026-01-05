@@ -23,6 +23,7 @@
 #include "gql/ast/print/references.h"
 #include "gql/ast/print/statements.h"
 #include "gql/ast/print/types.h"
+#include "gql/ast/print/pgq.h"
 
 namespace gql::ast {
 

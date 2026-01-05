@@ -41,6 +41,9 @@ void SyntaxAnalyzer::Process(ast::LinearCatalogModifyingStatement& statement,
 
           ProcessFallback(statement, context);
         },
+        [&](const ast::PgqCreateGraphStatement& statement) {
+
+        },
         [&](const ast::DropSchemaStatement& statement) {
           ThrowIfFeatureNotSupported(standard::Feature::GC01, statement);
           if (statement.ifExists) {

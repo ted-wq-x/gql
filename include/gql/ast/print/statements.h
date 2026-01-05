@@ -185,7 +185,8 @@ GQL_AST_ENUM_PRINTER(SessionResetArguments,
                      (Characteristics, "CHARACTERISTICS"),
                      (Schema, "SCHEMA"),
                      (Graph, "GRAPH"),
-                     (TimeZone, "TIME ZONE"))
+                     (TimeZone, "TIME ZONE"),
+                     (QueryLang, "QUERY.LANG"))
 
 template <>
 struct Printer<SessionResetCommand> {

@@ -116,8 +116,8 @@ struct SessionSetTimeZoneClause : NodeBase<SessionSetTimeZoneClause> {
 };
 GQL_AST_STRUCT(SessionSetTimeZoneClause, timeZoneString)
 
-//sessionSetQueryLangClause
-//    : QUERY PERIOD LANG setQueryLangValue
+// sessionSetQueryLangClause
+//     : QUERY PERIOD LANG setQueryLangValue
 struct SessionSetQueryLangClause : NodeBase<SessionSetQueryLangClause> {
   std::string queryLangString;
 };
@@ -436,6 +436,104 @@ struct DropGraphTypeStatement : NodeBase<DropGraphTypeStatement> {
 };
 GQL_AST_STRUCT(DropGraphTypeStatement, ifExists, graphType)
 
+using PgqColumnNameList = std::vector<PgqColumnName>;
+using PgqDynamicLabel = PgqDynamicLabelColumnName;
+using PgqDynamicProperties = PgqDynamicPropertiesColumnName;
+
+struct PgqNoProperties {};
+GQL_AST_VALUE(PgqNoProperties)
+
+struct PgqPropertiesAre : NodeBase<PgqPropertiesAre> {
+  std::optional<PgqColumnNameList> exceptColumnNames;
+};
+GQL_AST_STRUCT(PgqPropertiesAre, exceptColumnNames)
+
+struct PgqDerivedProperty : NodeBase<PgqDerivedProperty> {
+  ValueExpression expr;
+  std::optional<PropertyName> name;
+};
+GQL_AST_STRUCT(PgqDerivedProperty, expr, name)
+
+using PgqDerivedPropertyList = std::vector<PgqDerivedProperty>;
+using PgqElementProperties =
+    std::variant<PgqNoProperties, PgqPropertiesAre, PgqDerivedPropertyList>;
+using PgqElementKey = PgqColumnNameList;
+using PgqNodeElementKey = std::optional<PgqElementKey>;
+using PgqEdgeColumnNameList = PgqColumnNameList;
+using PgqNodeColumnNameList = PgqColumnNameList;
+
+struct PgqDefaultLabel {};
+GQL_AST_VALUE(PgqDefaultLabel)
+
+using PgqElementLabel = std::variant<LabelName, PgqDefaultLabel>;
+
+struct PgqLabelAndProperties : NodeBase<PgqLabelAndProperties> {
+  PgqElementLabel label;
+  std::optional<PgqElementProperties> properties;
+};
+GQL_AST_STRUCT(PgqLabelAndProperties, label, properties)
+
+using PgqLabelAndPropertiesList = std::vector<PgqLabelAndProperties>;
+
+struct PgqSourceKey : NodeBase<PgqSourceKey> {
+  PgqEdgeColumnNameList edgeColumnNameList;
+  PgqElementAliasReference elementAliasReference;
+  std::optional<PgqNodeColumnNameList> nodeColumnNameList;
+};
+GQL_AST_STRUCT(PgqSourceKey,
+               edgeColumnNameList,
+               elementAliasReference,
+               nodeColumnNameList)
+
+struct PgqDestinationKey : NodeBase<PgqDestinationKey> {
+  PgqEdgeColumnNameList edgeColumnNameList;
+  PgqElementAliasReference elementAliasReference;
+  std::optional<PgqNodeColumnNameList> nodeColumnNameList;
+};
+GQL_AST_STRUCT(PgqDestinationKey,
+               edgeColumnNameList,
+               elementAliasReference,
+               nodeColumnNameList)
+
+struct PgqEdgeElementKeys : NodeBase<PgqEdgeElementKeys> {
+  std::optional<PgqElementKey> key;
+  PgqSourceKey sourceKey;
+  PgqDestinationKey destinationKey;
+};
+GQL_AST_STRUCT(PgqEdgeElementKeys, key, sourceKey, destinationKey)
+
+using PgqElementKeys = std::variant<PgqNodeElementKey, PgqEdgeElementKeys>;
+
+struct PgqElement : NodeBase<PgqElement> {
+  PgqElementName elementName;
+  std::optional<PgqAlias> alias;
+  PgqElementKeys elementKeys;
+  std::optional<std::variant<PgqLabelAndPropertiesList, PgqElementProperties>>
+      properties;
+  std::optional<PgqDynamicLabel> dynamicLabel;
+  std::optional<PgqDynamicProperties> dynamicProperties;
+};
+GQL_AST_STRUCT(PgqElement,
+               elementName,
+               alias,
+               elementKeys,
+               properties,
+               dynamicLabel,
+               dynamicProperties)
+
+struct PgqCreateGraphStatement : NodeBase<PgqCreateGraphStatement> {
+  CreateGraphStatement::CreateType createType =
+      CreateGraphStatement::CreateType::Default;
+  CatalogGraphParentAndName graph;
+  std::vector<PgqElement> nodeTables;
+  std::vector<PgqElement> edgeTables;
+};
+GQL_AST_STRUCT(PgqCreateGraphStatement,
+               createType,
+               graph,
+               nodeTables,
+               edgeTables)
+
 // primitiveCatalogModifyingStatement
 //    : createSchemaStatement
 //    | dropSchemaStatement
@@ -454,7 +552,8 @@ using SimpleCatalogModifyingStatement =
                  DropGraphStatement,        // GC04 feature
                  CreateGraphTypeStatement,  // GC02 feature
                  DropGraphTypeStatement,    // GC02 feature
-                 CallProcedureStatement>;
+                 CallProcedureStatement,
+                 PgqCreateGraphStatement>;
 
 // linearCatalogModifyingStatement
 //    : simpleCatalogModifyingStatement+

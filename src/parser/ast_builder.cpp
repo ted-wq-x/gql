@@ -1064,22 +1064,22 @@ struct ASTBuilder {
   void BuildAST(GQLParser::CharacterStringTypeContext* ctx,
                 ast::StringType& value,
                 bool* notNull) {
-    value.kind = ast::StringType::Kind::CHAR;
-    if (ctx->CHAR()) {
-      if (auto ctx2 = ctx->fixedLength()) {
-        BuildAST(ctx2->unsignedInteger(), value.minLength);
-        value.maxLength = value.minLength;
-      } else {
-        value.minLength = 1;
-        value.maxLength = 1;
-      }
-    } else {
-      if (auto ctx2 = ctx->minLength()) {
-        BuildAST(ctx2->unsignedInteger(), value.minLength);
-      }
-      if (auto ctx2 = ctx->maxLength()) {
-        BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
-      }
+    if (ctx->STRING()) {
+      value.kind = ast::StringType::Kind::STRING;
+    } else if (ctx->CHAR()) {
+      value.kind = ast::StringType::Kind::CHAR;
+    } else if (ctx->VARCHAR()) {
+      value.kind = ast::StringType::Kind::VARCHAR;
+    }
+    if (auto ctx2 = ctx->minLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+    }
+    if (auto ctx2 = ctx->maxLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
+    }
+    if (auto ctx2 = ctx->fixedLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+      value.maxLength = value.minLength;
     }
 
     *notNull = !!ctx->notNull();
@@ -1088,22 +1088,22 @@ struct ASTBuilder {
   void BuildAST(GQLParser::ByteStringTypeContext* ctx,
                 ast::StringType& value,
                 bool* notNull) {
-    value.kind = ast::StringType::Kind::BYTES;
-    if (ctx->BINARY()) {
-      if (auto ctx2 = ctx->fixedLength()) {
-        BuildAST(ctx2->unsignedInteger(), value.minLength);
-        value.maxLength = value.minLength;
-      } else {
-        value.minLength = 1;
-        value.maxLength = 1;
-      }
-    } else {
-      if (auto ctx2 = ctx->minLength()) {
-        BuildAST(ctx2->unsignedInteger(), value.minLength);
-      }
-      if (auto ctx2 = ctx->maxLength()) {
-        BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
-      }
+    if (ctx->BYTES()) {
+      value.kind = ast::StringType::Kind::BYTES;
+    } else if (ctx->BINARY()) {
+      value.kind = ast::StringType::Kind::BINARY;
+    } else if (ctx->VARBINARY()) {
+      value.kind = ast::StringType::Kind::VARBINARY;
+    }
+    if (auto ctx2 = ctx->minLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+    }
+    if (auto ctx2 = ctx->maxLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.maxLength.emplace());
+    }
+    if (auto ctx2 = ctx->fixedLength()) {
+      BuildAST(ctx2->unsignedInteger(), value.minLength);
+      value.maxLength = value.minLength;
     }
 
     *notNull = !!ctx->notNull();
@@ -2571,11 +2571,12 @@ struct ASTBuilder {
                 ast::CreateGraphStatement& value) {
     AssignInputPosition(ctx, value);
     BuildAST(ctx->catalogGraphParentAndName(), value.graph);
-    if (auto ctx2 = ctx->ofGraphType()) {
-      BuildAST(ctx2, value.graphType.emplace());
+    auto ct2 = ctx->propertyGraphContent();
+    if (auto ctx3 = ct2->ofGraphType()) {
+      BuildAST(ctx3, value.graphType.emplace());
     }
-    if (auto ctx2 = ctx->graphSource()) {
-      BuildAST(ctx2->graphExpression(), value.source.emplace());
+    if (auto ctx3 = ct2->graphSource()) {
+      BuildAST(ctx3->graphExpression(), value.source.emplace());
     }
 
     if (ctx->IF() != nullptr) {
@@ -2684,7 +2685,11 @@ struct ASTBuilder {
       } else if (auto ctx3 = ctx2->dropSchemaStatement()) {
         BuildAST(ctx3, value.emplace<ast::DropSchemaStatement>());
       } else if (auto ctx3 = ctx2->createGraphStatement()) {
-        BuildAST(ctx3, value.emplace<ast::CreateGraphStatement>());
+        if (ctx3->pgq_propertyGraphContent()) {
+          BuildAST(ctx3, value.emplace<ast::PgqCreateGraphStatement>());
+        } else {
+          BuildAST(ctx3, value.emplace<ast::CreateGraphStatement>());
+        }
       } else if (auto ctx3 = ctx2->dropGraphStatement()) {
         BuildAST(ctx3, value.emplace<ast::DropGraphStatement>());
       } else if (auto ctx3 = ctx2->createGraphTypeStatement()) {
@@ -2696,6 +2701,153 @@ struct ASTBuilder {
       BuildAST(ctx->callCatalogModifyingProcedureStatement()
                    ->callProcedureStatement(),
                value.emplace<ast::CallProcedureStatement>());
+    }
+  }
+
+  void BuildAST(GQLParser::Pgq_derivedPropertyListContext* ctx,
+                ast::PgqDerivedPropertyList& properties) {
+    for (auto& propertyCtx : ctx->pgg_derivedProperty()) {
+      auto& property = properties.emplace_back();
+      BuildAST(propertyCtx->valueExpression(), property.expr);
+      BuildAST(propertyCtx->propertyName()->identifier(),
+               property.name.emplace());
+    }
+  }
+
+  void BuildAST(GQLParser::Pgq_columnNameListContext* ctx,
+                ast::PgqColumnNameList& columnNameList) {
+    for (auto& columnName : ctx->pgq_columnName()) {
+      BuildAST(columnName->identifier(), columnNameList.emplace_back());
+    }
+  }
+
+  void BuildAST(GQLParser::Pgq_nodeElementKeyContext* ctx,
+                ast::PgqNodeElementKey& key) {
+    if (auto elementKeyCtx = ctx->pgq_elementKey()) {
+      BuildAST(elementKeyCtx->pgq_columnNameList(), key.emplace());
+    }
+  }
+
+  void BuildAST(GQLParser::Pgq_edgeElementKeysContext* ctx,
+                ast::PgqEdgeElementKeys& keys) {
+    AssignInputPosition(ctx, keys);
+    if (auto elementKeyCtx = ctx->pgq_elementKey()) {
+      BuildAST(elementKeyCtx->pgq_columnNameList(), keys.key.emplace());
+    }
+
+    auto sourceKeyCtx = ctx->pgq_sourceKey();
+    AssignInputPosition(sourceKeyCtx, keys.sourceKey);
+    BuildAST(sourceKeyCtx->pgq_edgeColumnNameList()->pgq_columnNameList(),
+             keys.sourceKey.edgeColumnNameList);
+    BuildAST(sourceKeyCtx->pgq_elementAliasReference()->identifier(),
+             keys.sourceKey.elementAliasReference);
+    if (auto nodeColumnNameList = sourceKeyCtx->pgq_nodeColumnNameList()) {
+      BuildAST(nodeColumnNameList->pgq_columnNameList(),
+               keys.sourceKey.nodeColumnNameList.emplace());
+    }
+    auto destinationKeyCtx = ctx->pgq_destinationKey();
+    AssignInputPosition(destinationKeyCtx, keys.destinationKey);
+    BuildAST(destinationKeyCtx->pgq_edgeColumnNameList()->pgq_columnNameList(),
+             keys.destinationKey.edgeColumnNameList);
+    BuildAST(destinationKeyCtx->pgq_elementAliasReference()->identifier(),
+             keys.destinationKey.elementAliasReference);
+    if (auto nodeColumnNameList = destinationKeyCtx->pgq_nodeColumnNameList()) {
+      BuildAST(nodeColumnNameList->pgq_columnNameList(),
+               keys.destinationKey.nodeColumnNameList.emplace());
+    }
+  }
+
+  ast::PgqElementProperties BuildAST(
+      GQLParser::Pgq_elementPropertiesContext* ctx) {
+    if (ctx->NO()) {
+      return ast::PgqNoProperties();
+    }
+    if (auto areCtx = ctx->pgq_propertiesAre()) {
+      ast::PgqPropertiesAre propertiesAre;
+      if (auto nameListCtx = areCtx->pgq_columnNameList()) {
+        BuildAST(nameListCtx, propertiesAre.exceptColumnNames.emplace());
+      }
+      return propertiesAre;
+    }
+    ast::PgqDerivedPropertyList properties;
+    BuildAST(ctx->pgq_derivedPropertyList(), properties);
+    return properties;
+  }
+
+  void BuildAST(GQLParser::Pgq_labelAndPropertiesContext* ctx,
+                ast::PgqLabelAndProperties& labelAndProperties) {
+    AssignInputPosition(ctx, labelAndProperties);
+    if (auto labelNameCtx = ctx->pgq_elementLabel()->labelName()) {
+      BuildAST(labelNameCtx->identifier(),
+               labelAndProperties.label.emplace<ast::LabelName>());
+    } else {
+      auto token = ctx->pgq_elementLabel()->getStart();
+      throw FormattedError({token->getLine(), token->getCharPositionInLine()},
+                           ErrorCode::E0118, "Not support default label name");
+    }
+    if (auto propsCtx = ctx->pgq_elementProperties()) {
+      labelAndProperties.properties.emplace(BuildAST(propsCtx));
+    }
+  }
+
+  void BuildAST(GQLParser::Pgq_labelAndPropertiesListContext* ctx,
+                ast::PgqLabelAndPropertiesList& labelAndPropertiesList) {
+    for (auto& labelAndPropertyCtx : ctx->pgq_labelAndProperties()) {
+      BuildAST(labelAndPropertyCtx, labelAndPropertiesList.emplace_back());
+    }
+  }
+
+  void BuildAST(GQLParser::Pgq_elementListContext* ctx,
+                std::vector<ast::PgqElement>& tables) {
+    for (auto elementCtx : ctx->pgq_element()) {
+      auto& pgqElement = tables.emplace_back();
+      AssignInputPosition(elementCtx, pgqElement);
+      BuildAST(elementCtx->pgq_elementName()->identifier(),
+               pgqElement.elementName);
+      if (auto alias = elementCtx->pgq_Alias()) {
+        BuildAST(alias->identifier(), pgqElement.alias.emplace());
+      }
+      auto keysCtx = elementCtx->pgq_elementKeys();
+      if (auto nodeKey = keysCtx->pgq_nodeElementKey()) {
+        BuildAST(nodeKey,
+                 pgqElement.elementKeys.emplace<ast::PgqNodeElementKey>());
+      } else {
+        BuildAST(keysCtx->pgq_edgeElementKeys(),
+                 pgqElement.elementKeys.emplace<ast::PgqEdgeElementKeys>());
+      }
+      if (auto labelAndPropsCtx = elementCtx->pgq_labelAndPropertiesList()) {
+        ast::PgqLabelAndPropertiesList list;
+        BuildAST(labelAndPropsCtx, list);
+        pgqElement.properties.emplace(list);
+      }
+      if (auto elePropsCtx = elementCtx->pgq_elementProperties()) {
+        pgqElement.properties.emplace(BuildAST(elePropsCtx));
+      }
+      if (auto dynamicLabelCtx = elementCtx->pgq_dynamicLabel()) {
+        BuildAST(dynamicLabelCtx->pgq_dynamicLabelColumnName()->identifier(),
+                 pgqElement.dynamicLabel.emplace());
+      }
+      if (auto dynamicProps = elementCtx->pgq_dynamicProperties()) {
+        BuildAST(dynamicProps->pgq_dynamicPropertiesColumnName()->identifier(),
+                 pgqElement.dynamicProperties.emplace());
+      }
+    }
+  }
+
+  void BuildAST(GQLParser::CreateGraphStatementContext* ctx,
+                ast::PgqCreateGraphStatement& value) {
+    AssignInputPosition(ctx, value);
+    BuildAST(ctx->catalogGraphParentAndName(), value.graph);
+    auto ct2 = ctx->pgq_propertyGraphContent();
+
+    BuildAST(ct2->pgq_nodeTables()->pgq_elementList(), value.nodeTables);
+    if (auto edgeTables = ct2->pgq_edgeTables()) {
+      BuildAST(edgeTables->pgq_elementList(), value.edgeTables);
+    }
+    if (ctx->IF() != nullptr) {
+      value.createType = ast::CreateGraphStatement::CreateType::IfNotExists;
+    } else if (ctx->REPLACE() != nullptr) {
+      value.createType = ast::CreateGraphStatement::CreateType::OrReplace;
     }
   }
 
@@ -3397,9 +3549,10 @@ struct ASTBuilder {
     } else if (auto ctx2 = ctx->sessionSetQueryLangClause()) {
       auto& value2 = value.emplace<ast::SessionSetQueryLangClause>();
       AssignInputPosition(ctx2, value2);
-      BuildAST(
-          ctx2->setQueryLangValue()->queryLangString()->characterStringLiteral(),
-          value2.queryLangString);
+      BuildAST(ctx2->setQueryLangValue()
+                   ->queryLangString()
+                   ->characterStringLiteral(),
+               value2.queryLangString);
     }
   }
 

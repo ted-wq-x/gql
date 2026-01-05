@@ -44,9 +44,9 @@ enum class SimplePredefinedType {
 //     | VARCHAR (LEFT_PAREN maxLength RIGHT_PAREN)? notNull?
 //     ;
 struct StringType {
-  enum class Kind { CHAR, BYTES };
+  enum class Kind { STRING, CHAR, VARCHAR, BYTES, BINARY, VARBINARY };
 
-  Kind kind = Kind::CHAR;
+  Kind kind = Kind::STRING;
   UnsignedInteger minLength = 0;
   std::optional<UnsignedInteger> maxLength;
 };
@@ -377,7 +377,7 @@ GQL_AST_STRUCT(RecordType, fields)
 //     ;
 struct ValueType : NodeBase<ValueType> {
   struct List {
-    bool isGroup = false; //NOTE 306,should not be used by user
+    bool isGroup = false;  // NOTE 306,should not be used by user
     ValueTypePtr valueType;
     std::optional<UnsignedInteger> maxLength;
   };

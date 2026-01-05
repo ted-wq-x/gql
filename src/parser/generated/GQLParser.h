@@ -21,83 +21,85 @@ public:
     UNSIGNED_DECIMAL_INTEGER_WITH_EXACT_NUMBER_SUFFIX = 14, UNSIGNED_DECIMAL_INTEGER_WITH_APPROXIMATE_NUMBER_SUFFIX = 15, 
     UNSIGNED_DECIMAL_INTEGER = 16, UNSIGNED_HEXADECIMAL_INTEGER = 17, UNSIGNED_OCTAL_INTEGER = 18, 
     UNSIGNED_BINARY_INTEGER = 19, ABS = 20, ACOS = 21, ALL = 22, ALL_DIFFERENT = 23, 
-    AND = 24, ANY = 25, ARRAY = 26, AS = 27, ASC = 28, ASCENDING = 29, ASIN = 30, 
-    AT = 31, ATAN = 32, AVG = 33, BIG = 34, BIGINT = 35, BINARY = 36, BOOL = 37, 
-    BOOLEAN = 38, BOTH = 39, BTRIM = 40, BY = 41, BYTE_LENGTH = 42, BYTES = 43, 
-    CALL = 44, CARDINALITY = 45, CASE = 46, CAST = 47, CEIL = 48, CEILING = 49, 
-    CHAR = 50, CHAR_LENGTH = 51, CHARACTER_LENGTH = 52, CHARACTERISTICS = 53, 
-    CLOSE = 54, COALESCE = 55, COLLECT_LIST = 56, COMMIT = 57, COPY = 58, 
-    COS = 59, COSH = 60, COT = 61, COUNT = 62, CREATE = 63, CURRENT_DATE = 64, 
-    CURRENT_GRAPH = 65, CURRENT_PROPERTY_GRAPH = 66, CURRENT_SCHEMA = 67, 
-    CURRENT_TIME = 68, CURRENT_TIMESTAMP = 69, DATE = 70, DATETIME = 71, 
-    DAY = 72, DEC = 73, DECIMAL = 74, DEGREES = 75, DELETE = 76, DESC = 77, 
-    DESCENDING = 78, DETACH = 79, DISTINCT = 80, DOUBLE = 81, DROP = 82, 
-    DURATION = 83, DURATION_BETWEEN = 84, ELEMENT_ID = 85, ELSE = 86, END = 87, 
-    EXCEPT = 88, EXISTS = 89, EXP = 90, FILTER = 91, FINISH = 92, FLOAT = 93, 
-    FLOAT16 = 94, FLOAT32 = 95, FLOAT64 = 96, FLOAT128 = 97, FLOAT256 = 98, 
-    FLOOR = 99, FOR = 100, FROM = 101, GROUP = 102, HAVING = 103, HOME_GRAPH = 104, 
-    HOME_PROPERTY_GRAPH = 105, HOME_SCHEMA = 106, HOUR = 107, IF = 108, 
-    IN = 109, INSERT = 110, INT = 111, INTEGER = 112, INT8 = 113, INTEGER8 = 114, 
-    INT16 = 115, INTEGER16 = 116, INT32 = 117, INTEGER32 = 118, INT64 = 119, 
-    INTEGER64 = 120, INT128 = 121, INTEGER128 = 122, INT256 = 123, INTEGER256 = 124, 
-    INTERSECT = 125, INTERVAL = 126, IS = 127, LEADING = 128, LEFT = 129, 
-    LET = 130, LIKE = 131, LIMIT = 132, LIST = 133, LN = 134, LOCAL = 135, 
-    LOCAL_DATETIME = 136, LOCAL_TIME = 137, LOCAL_TIMESTAMP = 138, LOG_KW = 139, 
-    LOG10 = 140, LOWER = 141, LTRIM = 142, MATCH = 143, MAX = 144, MIN = 145, 
-    MINUTE = 146, MOD = 147, MONTH = 148, NEXT = 149, NODETACH = 150, NORMALIZE = 151, 
-    NOT = 152, NOTHING = 153, NULL_KW = 154, NULLS = 155, NULLIF = 156, 
-    OCTET_LENGTH = 157, OF = 158, OFFSET = 159, OPTIONAL = 160, OR = 161, 
-    ORDER = 162, OTHERWISE = 163, PARAMETER = 164, PARAMETERS = 165, PATH = 166, 
-    PATH_LENGTH = 167, PATHS = 168, PERCENTILE_CONT = 169, PERCENTILE_DISC = 170, 
-    POWER = 171, PRECISION = 172, PROPERTY_EXISTS = 173, RADIANS = 174, 
-    REAL = 175, RECORD = 176, REMOVE = 177, REPLACE = 178, RESET = 179, 
-    RETURN = 180, RIGHT = 181, ROLLBACK = 182, RTRIM = 183, SAME = 184, 
-    SCHEMA = 185, SECOND = 186, SELECT = 187, SESSION = 188, SESSION_USER = 189, 
-    SET = 190, SIGNED = 191, SIN = 192, SINH = 193, SIZE = 194, SKIP_RESERVED_WORD = 195, 
-    SMALL = 196, SMALLINT = 197, SQRT = 198, START = 199, STDDEV_POP = 200, 
-    STDDEV_SAMP = 201, STRING = 202, SUM = 203, TAN = 204, TANH = 205, THEN = 206, 
-    TIME = 207, TIMESTAMP = 208, TRAILING = 209, TRIM = 210, TYPED = 211, 
-    UBIGINT = 212, UINT = 213, UINT8 = 214, UINT16 = 215, UINT32 = 216, 
-    UINT64 = 217, UINT128 = 218, UINT256 = 219, UNION = 220, UNSIGNED = 221, 
-    UPPER = 222, USE = 223, USMALLINT = 224, VALUE = 225, VARBINARY = 226, 
-    VARCHAR = 227, VARIABLE = 228, WHEN = 229, WHERE = 230, WITH = 231, 
-    XOR = 232, YEAR = 233, YIELD = 234, ZONED = 235, ZONED_DATETIME = 236, 
-    ZONED_TIME = 237, LANG = 238, ABSTRACT = 239, AGGREGATE = 240, AGGREGATES = 241, 
-    ALTER = 242, CATALOG = 243, CLEAR = 244, CLONE = 245, CONSTRAINT = 246, 
-    CURRENT_ROLE = 247, CURRENT_USER = 248, DATA = 249, DIRECTORY = 250, 
-    DRYRUN = 251, EXACT = 252, EXISTING = 253, FUNCTION = 254, GQLSTATUS = 255, 
-    GRANT = 256, INSTANT = 257, INFINITY_KW = 258, NUMBER = 259, NUMERIC = 260, 
-    ON = 261, OPEN = 262, PARTITION = 263, PROCEDURE = 264, PRODUCT = 265, 
-    PROJECT = 266, QUERY = 267, RECORDS = 268, REFERENCE = 269, RENAME = 270, 
-    REVOKE = 271, SUBSTRING = 272, SYSTEM_USER = 273, TEMPORAL = 274, UNIQUE = 275, 
-    UNIT = 276, VALUES = 277, ACYCLIC = 278, BINDING = 279, BINDINGS = 280, 
-    CONNECTING = 281, DESTINATION = 282, DIFFERENT = 283, DIRECTED = 284, 
-    EDGE = 285, EDGES = 286, ELEMENT = 287, ELEMENTS = 288, FIRST = 289, 
-    GRAPH = 290, GROUPS = 291, KEEP = 292, LABEL = 293, LABELED = 294, LABELS = 295, 
-    LAST = 296, NFC = 297, NFD = 298, NFKC = 299, NFKD = 300, NO = 301, 
-    NODE = 302, NORMALIZED = 303, ONLY = 304, ORDINALITY = 305, PROPERTY = 306, 
-    READ = 307, RELATIONSHIP = 308, RELATIONSHIPS = 309, REPEATABLE = 310, 
-    SHORTEST = 311, SIMPLE = 312, SOURCE = 313, TABLE = 314, TO = 315, TRAIL = 316, 
-    TRANSACTION = 317, TYPE = 318, UNDIRECTED = 319, VERTEX = 320, WALK = 321, 
-    WITHOUT = 322, WRITE = 323, ZONE = 324, REGULAR_IDENTIFIER = 325, SUBSTITUTED_PARAMETER_REFERENCE = 326, 
-    GENERAL_PARAMETER_REFERENCE = 327, MULTISET_ALTERNATION_OPERATOR = 328, 
-    BRACKET_RIGHT_ARROW = 329, BRACKET_TILDE_RIGHT_ARROW = 330, CONCATENATION_OPERATOR = 331, 
-    DOUBLE_COLON = 332, DOUBLE_DOLLAR_SIGN = 333, DOUBLE_PERIOD = 334, GREATER_THAN_OR_EQUALS_OPERATOR = 335, 
-    LEFT_ARROW = 336, LEFT_ARROW_TILDE = 337, LEFT_ARROW_BRACKET = 338, 
-    LEFT_ARROW_TILDE_BRACKET = 339, LEFT_MINUS_RIGHT = 340, LEFT_MINUS_SLASH = 341, 
-    LEFT_TILDE_SLASH = 342, LESS_THAN_OR_EQUALS_OPERATOR = 343, MINUS_LEFT_BRACKET = 344, 
-    MINUS_SLASH = 345, NOT_EQUALS_OPERATOR = 346, RIGHT_ARROW = 347, RIGHT_BRACKET_MINUS = 348, 
-    RIGHT_BRACKET_TILDE = 349, RIGHT_DOUBLE_ARROW = 350, SLASH_MINUS = 351, 
-    SLASH_MINUS_RIGHT = 352, SLASH_TILDE = 353, SLASH_TILDE_RIGHT = 354, 
-    TILDE_LEFT_BRACKET = 355, TILDE_RIGHT_ARROW = 356, TILDE_SLASH = 357, 
-    AMPERSAND = 358, ASTERISK = 359, COLON = 360, COMMA = 361, COMMERCIAL_AT = 362, 
-    DOLLAR_SIGN = 363, DOUBLE_QUOTE = 364, EQUALS_OPERATOR = 365, EXCLAMATION_MARK = 366, 
-    RIGHT_ANGLE_BRACKET = 367, GRAVE_ACCENT = 368, LEFT_BRACE = 369, LEFT_BRACKET = 370, 
-    LEFT_PAREN = 371, LEFT_ANGLE_BRACKET = 372, MINUS_SIGN = 373, PERCENT = 374, 
-    PERIOD = 375, PLUS_SIGN = 376, QUESTION_MARK = 377, QUOTE = 378, REVERSE_SOLIDUS = 379, 
-    RIGHT_BRACE = 380, RIGHT_BRACKET = 381, RIGHT_PAREN = 382, SOLIDUS = 383, 
-    TILDE = 384, UNDERSCORE = 385, VERTICAL_BAR = 386, SP = 387, WHITESPACE = 388, 
-    BRACKETED_COMMENT = 389, SIMPLE_COMMENT_SOLIDUS = 390, SIMPLE_COMMENT_MINUS = 391
+    AND = 24, ANY = 25, ARE = 26, ARRAY = 27, AS = 28, ASC = 29, ASCENDING = 30, 
+    ASIN = 31, AT = 32, ATAN = 33, AVG = 34, BIG = 35, BIGINT = 36, BINARY = 37, 
+    BOOL = 38, BOOLEAN = 39, BOTH = 40, BTRIM = 41, BY = 42, BYTE_LENGTH = 43, 
+    BYTES = 44, CALL = 45, CARDINALITY = 46, CASE = 47, CAST = 48, CEIL = 49, 
+    CEILING = 50, CHAR = 51, CHAR_LENGTH = 52, CHARACTER_LENGTH = 53, CHARACTERISTICS = 54, 
+    CLOSE = 55, COALESCE = 56, COLLECT_LIST = 57, COLUMNS = 58, COMMIT = 59, 
+    COPY = 60, COS = 61, COSH = 62, COT = 63, COUNT = 64, CREATE = 65, CURRENT_DATE = 66, 
+    CURRENT_GRAPH = 67, CURRENT_PROPERTY_GRAPH = 68, CURRENT_SCHEMA = 69, 
+    CURRENT_TIME = 70, CURRENT_TIMESTAMP = 71, DATE = 72, DATETIME = 73, 
+    DAY = 74, DEC = 75, DECIMAL = 76, DEFAULT = 77, DEGREES = 78, DELETE = 79, 
+    DESC = 80, DESCENDING = 81, DETACH = 82, DISTINCT = 83, DOUBLE = 84, 
+    DROP = 85, DURATION = 86, DURATION_BETWEEN = 87, DYNAMIC = 88, ELEMENT_ID = 89, 
+    ELSE = 90, END = 91, EXCEPT = 92, EXISTS = 93, EXP = 94, FILTER = 95, 
+    FINISH = 96, FLOAT = 97, FLOAT16 = 98, FLOAT32 = 99, FLOAT64 = 100, 
+    FLOAT128 = 101, FLOAT256 = 102, FLOOR = 103, FOR = 104, FROM = 105, 
+    GROUP = 106, HAVING = 107, HOME_GRAPH = 108, HOME_PROPERTY_GRAPH = 109, 
+    HOME_SCHEMA = 110, HOUR = 111, IF = 112, IN = 113, INSERT = 114, INT = 115, 
+    INTEGER = 116, INT8 = 117, INTEGER8 = 118, INT16 = 119, INTEGER16 = 120, 
+    INT32 = 121, INTEGER32 = 122, INT64 = 123, INTEGER64 = 124, INT128 = 125, 
+    INTEGER128 = 126, INT256 = 127, INTEGER256 = 128, INTERSECT = 129, INTERVAL = 130, 
+    IS = 131, KEY = 132, LEADING = 133, LEFT = 134, LET = 135, LIKE = 136, 
+    LIMIT = 137, LIST = 138, LN = 139, LOCAL = 140, LOCAL_DATETIME = 141, 
+    LOCAL_TIME = 142, LOCAL_TIMESTAMP = 143, LOG_KW = 144, LOG10 = 145, 
+    LOWER = 146, LTRIM = 147, MATCH = 148, MAX = 149, MIN = 150, MINUTE = 151, 
+    MOD = 152, MONTH = 153, NEXT = 154, NODETACH = 155, NORMALIZE = 156, 
+    NOT = 157, NOTHING = 158, NULL_KW = 159, NULLS = 160, NULLIF = 161, 
+    OCTET_LENGTH = 162, OF = 163, OFFSET = 164, OPTIONAL = 165, OR = 166, 
+    ORDER = 167, OTHERWISE = 168, PARAMETER = 169, PARAMETERS = 170, PATH = 171, 
+    PATH_LENGTH = 172, PATHS = 173, PERCENTILE_CONT = 174, PERCENTILE_DISC = 175, 
+    POWER = 176, PRECISION = 177, PROPERTIES = 178, PROPERTY_EXISTS = 179, 
+    RADIANS = 180, REAL = 181, RECORD = 182, REFERENCES = 183, REMOVE = 184, 
+    REPLACE = 185, RESET = 186, RETURN = 187, RIGHT = 188, ROLLBACK = 189, 
+    RTRIM = 190, SAME = 191, SCHEMA = 192, SECOND = 193, SELECT = 194, SESSION = 195, 
+    SESSION_USER = 196, SET = 197, SIGNED = 198, SIN = 199, SINH = 200, 
+    SIZE = 201, SKIP_RESERVED_WORD = 202, SMALL = 203, SMALLINT = 204, SQRT = 205, 
+    START = 206, STDDEV_POP = 207, STDDEV_SAMP = 208, STRING = 209, SUM = 210, 
+    TAN = 211, TANH = 212, THEN = 213, TIME = 214, TIMESTAMP = 215, TRAILING = 216, 
+    TRIM = 217, TYPED = 218, UBIGINT = 219, UINT = 220, UINT8 = 221, UINT16 = 222, 
+    UINT32 = 223, UINT64 = 224, UINT128 = 225, UINT256 = 226, UNION = 227, 
+    UNSIGNED = 228, UPPER = 229, USE = 230, USMALLINT = 231, VALUE = 232, 
+    VARBINARY = 233, VARCHAR = 234, VARIABLE = 235, WHEN = 236, WHERE = 237, 
+    WITH = 238, XOR = 239, YEAR = 240, YIELD = 241, ZONED = 242, ZONED_DATETIME = 243, 
+    ZONED_TIME = 244, LANG = 245, ABSTRACT = 246, AGGREGATE = 247, AGGREGATES = 248, 
+    ALTER = 249, CATALOG = 250, CLEAR = 251, CLONE = 252, CONSTRAINT = 253, 
+    CURRENT_ROLE = 254, CURRENT_USER = 255, DATA = 256, DIRECTORY = 257, 
+    DRYRUN = 258, EXACT = 259, EXISTING = 260, FUNCTION = 261, GQLSTATUS = 262, 
+    GRANT = 263, INSTANT = 264, INFINITY_KW = 265, NUMBER = 266, NUMERIC = 267, 
+    ON = 268, OPEN = 269, PARTITION = 270, PROCEDURE = 271, PRODUCT = 272, 
+    PROJECT = 273, QUERY = 274, RECORDS = 275, REFERENCE = 276, RENAME = 277, 
+    REVOKE = 278, SUBSTRING = 279, SYSTEM_USER = 280, TEMPORAL = 281, UNIQUE = 282, 
+    UNIT = 283, VALUES = 284, ACYCLIC = 285, BINDING = 286, BINDINGS = 287, 
+    CONNECTING = 288, DESTINATION = 289, DIFFERENT = 290, DIRECTED = 291, 
+    EDGE = 292, EDGES = 293, ELEMENT = 294, ELEMENTS = 295, FIRST = 296, 
+    GRAPH = 297, GROUPS = 298, KEEP = 299, LABEL = 300, LABELED = 301, LABELS = 302, 
+    LAST = 303, NFC = 304, NFD = 305, NFKC = 306, NFKD = 307, NO = 308, 
+    NODE = 309, NORMALIZED = 310, ONLY = 311, ORDINALITY = 312, PROPERTY = 313, 
+    READ = 314, RELATIONSHIP = 315, RELATIONSHIPS = 316, REPEATABLE = 317, 
+    SHORTEST = 318, SIMPLE = 319, SOURCE = 320, TABLE = 321, TABLES = 322, 
+    TO = 323, TRAIL = 324, TRANSACTION = 325, TYPE = 326, UNDIRECTED = 327, 
+    VERTEX = 328, WALK = 329, WITHOUT = 330, WRITE = 331, ZONE = 332, REGULAR_IDENTIFIER = 333, 
+    SUBSTITUTED_PARAMETER_REFERENCE = 334, GENERAL_PARAMETER_REFERENCE = 335, 
+    MULTISET_ALTERNATION_OPERATOR = 336, BRACKET_RIGHT_ARROW = 337, BRACKET_TILDE_RIGHT_ARROW = 338, 
+    CONCATENATION_OPERATOR = 339, DOUBLE_COLON = 340, DOUBLE_DOLLAR_SIGN = 341, 
+    DOUBLE_PERIOD = 342, GREATER_THAN_OR_EQUALS_OPERATOR = 343, LEFT_ARROW = 344, 
+    LEFT_ARROW_TILDE = 345, LEFT_ARROW_BRACKET = 346, LEFT_ARROW_TILDE_BRACKET = 347, 
+    LEFT_MINUS_RIGHT = 348, LEFT_MINUS_SLASH = 349, LEFT_TILDE_SLASH = 350, 
+    LESS_THAN_OR_EQUALS_OPERATOR = 351, MINUS_LEFT_BRACKET = 352, MINUS_SLASH = 353, 
+    NOT_EQUALS_OPERATOR = 354, RIGHT_ARROW = 355, RIGHT_BRACKET_MINUS = 356, 
+    RIGHT_BRACKET_TILDE = 357, RIGHT_DOUBLE_ARROW = 358, SLASH_MINUS = 359, 
+    SLASH_MINUS_RIGHT = 360, SLASH_TILDE = 361, SLASH_TILDE_RIGHT = 362, 
+    TILDE_LEFT_BRACKET = 363, TILDE_RIGHT_ARROW = 364, TILDE_SLASH = 365, 
+    AMPERSAND = 366, ASTERISK = 367, COLON = 368, COMMA = 369, COMMERCIAL_AT = 370, 
+    DOLLAR_SIGN = 371, DOUBLE_QUOTE = 372, EQUALS_OPERATOR = 373, EXCLAMATION_MARK = 374, 
+    RIGHT_ANGLE_BRACKET = 375, GRAVE_ACCENT = 376, LEFT_BRACE = 377, LEFT_BRACKET = 378, 
+    LEFT_PAREN = 379, LEFT_ANGLE_BRACKET = 380, MINUS_SIGN = 381, PERCENT = 382, 
+    PERIOD = 383, PLUS_SIGN = 384, QUESTION_MARK = 385, QUOTE = 386, REVERSE_SOLIDUS = 387, 
+    RIGHT_BRACE = 388, RIGHT_BRACKET = 389, RIGHT_PAREN = 390, SOLIDUS = 391, 
+    TILDE = 392, UNDERSCORE = 393, VERTICAL_BAR = 394, SP = 395, WHITESPACE = 396, 
+    BRACKETED_COMMENT = 397, SIMPLE_COMMENT_SOLIDUS = 398, SIMPLE_COMMENT_MINUS = 399
   };
 
   enum {
@@ -124,200 +126,211 @@ public:
     RuleObjectExpressionPrimary = 51, RuleLinearCatalogModifyingStatement = 52, 
     RuleSimpleCatalogModifyingStatement = 53, RulePrimitiveCatalogModifyingStatement = 54, 
     RuleCreateSchemaStatement = 55, RuleDropSchemaStatement = 56, RuleCreateGraphStatement = 57, 
-    RuleOpenGraphType = 58, RuleOfGraphType = 59, RuleGraphTypeLikeGraph = 60, 
-    RuleGraphSource = 61, RuleDropGraphStatement = 62, RuleCreateGraphTypeStatement = 63, 
-    RuleGraphTypeSource = 64, RuleCopyOfGraphType = 65, RuleDropGraphTypeStatement = 66, 
-    RuleCallCatalogModifyingProcedureStatement = 67, RuleLinearDataModifyingStatement = 68, 
-    RuleFocusedLinearDataModifyingStatement = 69, RuleFocusedLinearDataModifyingStatementBody = 70, 
-    RuleFocusedNestedDataModifyingProcedureSpecification = 71, RuleAmbientLinearDataModifyingStatement = 72, 
-    RuleAmbientLinearDataModifyingStatementBody = 73, RuleSimpleLinearDataAccessingStatement = 74, 
-    RuleSimpleDataAccessingStatement = 75, RuleSimpleDataModifyingStatement = 76, 
-    RulePrimitiveDataModifyingStatement = 77, RuleInsertStatement = 78, 
-    RuleSetStatement = 79, RuleSetItemList = 80, RuleSetItem = 81, RuleSetPropertyItem = 82, 
-    RuleSetAllPropertiesItem = 83, RuleSetLabelItem = 84, RuleRemoveStatement = 85, 
-    RuleRemoveItemList = 86, RuleRemoveItem = 87, RuleRemovePropertyItem = 88, 
-    RuleRemoveLabelItem = 89, RuleDeleteStatement = 90, RuleDeleteItemList = 91, 
-    RuleDeleteItem = 92, RuleCallDataModifyingProcedureStatement = 93, RuleCompositeQueryStatement = 94, 
-    RuleCompositeQueryExpression = 95, RuleCompositeQueryExpressionFocused = 96, 
-    RuleCompositeQueryExpressionAmbient = 97, RuleQueryConjunction = 98, 
-    RuleSetOperator = 99, RuleCompositeQueryPrimary = 100, RuleLinearQueryStatement = 101, 
-    RuleFocusedLinearQueryStatement = 102, RuleFocusedLinearQueryStatementPart = 103, 
-    RuleFocusedLinearQueryAndPrimitiveResultStatementPart = 104, RuleFocusedPrimitiveResultStatement = 105, 
-    RuleFocusedNestedQuerySpecification = 106, RuleAmbientLinearQueryStatement = 107, 
-    RuleSimpleLinearQueryStatement = 108, RuleSimpleQueryStatement = 109, 
-    RulePrimitiveQueryStatement = 110, RuleMatchStatement = 111, RuleSimpleMatchStatement = 112, 
-    RuleOptionalMatchStatement = 113, RuleOptionalOperand = 114, RuleMatchStatementBlock = 115, 
-    RuleCallQueryStatement = 116, RuleFilterStatement = 117, RuleLetStatement = 118, 
-    RuleLetVariableDefinitionList = 119, RuleLetVariableDefinition = 120, 
-    RuleForStatement = 121, RuleForItem = 122, RuleForItemAlias = 123, RuleForItemSource = 124, 
-    RuleForOrdinalityOrOffset = 125, RuleOrderByAndPageStatement = 126, 
-    RulePrimitiveResultStatement = 127, RuleReturnStatement = 128, RuleReturnStatementBody = 129, 
-    RuleReturnItemList = 130, RuleReturnItem = 131, RuleReturnItemAlias = 132, 
-    RuleSelectStatement = 133, RuleSelectItemList = 134, RuleSelectItem = 135, 
-    RuleSelectItemAlias = 136, RuleHavingClause = 137, RuleSelectStatementBody = 138, 
-    RuleSelectGraphMatchList = 139, RuleSelectGraphMatch = 140, RuleSelectQuerySpecification = 141, 
-    RuleCallProcedureStatement = 142, RuleProcedureCall = 143, RuleInlineProcedureCall = 144, 
-    RuleVariableScopeClause = 145, RuleBindingVariableReferenceList = 146, 
-    RuleNamedProcedureCall = 147, RuleProcedureArgumentList = 148, RuleProcedureArgument = 149, 
-    RuleAtSchemaClause = 150, RuleUseGraphClause = 151, RuleGraphPatternBindingTable = 152, 
-    RuleGraphPatternYieldClause = 153, RuleGraphPatternYieldItemList = 154, 
-    RuleGraphPatternYieldItem = 155, RuleGraphPattern = 156, RuleMatchMode = 157, 
-    RuleRepeatableElementsMatchMode = 158, RuleDifferentEdgesMatchMode = 159, 
-    RuleElementBindingsOrElements = 160, RuleEdgeBindingsOrEdges = 161, 
-    RulePathPatternList = 162, RulePathPattern = 163, RulePathVariableDeclaration = 164, 
-    RuleKeepClause = 165, RuleGraphPatternWhereClause = 166, RuleInsertGraphPattern = 167, 
-    RuleInsertPathPatternList = 168, RuleInsertPathPattern = 169, RuleInsertNodePattern = 170, 
-    RuleInsertEdgePattern = 171, RuleInsertEdgePointingLeft = 172, RuleInsertEdgePointingRight = 173, 
-    RuleInsertEdgeUndirected = 174, RuleInsertElementPatternFiller = 175, 
-    RuleLabelAndPropertySetSpecification = 176, RulePathPatternPrefix = 177, 
-    RulePathModePrefix = 178, RulePathMode = 179, RulePathSearchPrefix = 180, 
-    RuleAllPathSearch = 181, RulePathOrPaths = 182, RuleAnyPathSearch = 183, 
-    RuleNumberOfPaths = 184, RuleShortestPathSearch = 185, RuleAllShortestPathSearch = 186, 
-    RuleAnyShortestPathSearch = 187, RuleCountedShortestPathSearch = 188, 
-    RuleCountedShortestGroupSearch = 189, RuleNumberOfGroups = 190, RulePathPatternExpression = 191, 
-    RulePathTerm = 192, RulePathFactor = 193, RulePathPrimary = 194, RuleElementPattern = 195, 
-    RuleNodePattern = 196, RuleElementPatternFiller = 197, RuleElementVariableDeclaration = 198, 
-    RuleIsLabelExpression = 199, RuleIsOrColon = 200, RuleElementPatternPredicate = 201, 
-    RuleElementPatternWhereClause = 202, RuleElementPropertySpecification = 203, 
-    RulePropertyKeyValuePairList = 204, RulePropertyKeyValuePair = 205, 
-    RuleEdgePattern = 206, RuleFullEdgePattern = 207, RuleFullEdgePointingLeft = 208, 
-    RuleFullEdgeUndirected = 209, RuleFullEdgePointingRight = 210, RuleFullEdgeLeftOrUndirected = 211, 
-    RuleFullEdgeUndirectedOrRight = 212, RuleFullEdgeLeftOrRight = 213, 
-    RuleFullEdgeAnyDirection = 214, RuleAbbreviatedEdgePattern = 215, RuleParenthesizedPathPatternExpression = 216, 
-    RuleSubpathVariableDeclaration = 217, RuleParenthesizedPathPatternWhereClause = 218, 
-    RuleLabelExpression = 219, RulePathVariableReference = 220, RuleElementVariableReference = 221, 
-    RuleGraphPatternQuantifier = 222, RuleFixedQuantifier = 223, RuleGeneralQuantifier = 224, 
-    RuleLowerBound = 225, RuleUpperBound = 226, RuleSimplifiedPathPatternExpression = 227, 
-    RuleSimplifiedDefaultingLeft = 228, RuleSimplifiedDefaultingUndirected = 229, 
-    RuleSimplifiedDefaultingRight = 230, RuleSimplifiedDefaultingLeftOrUndirected = 231, 
-    RuleSimplifiedDefaultingUndirectedOrRight = 232, RuleSimplifiedDefaultingLeftOrRight = 233, 
-    RuleSimplifiedDefaultingAnyDirection = 234, RuleSimplifiedContents = 235, 
-    RuleSimplifiedPathUnion = 236, RuleSimplifiedMultisetAlternation = 237, 
-    RuleSimplifiedTerm = 238, RuleSimplifiedFactorLow = 239, RuleSimplifiedFactorHigh = 240, 
-    RuleSimplifiedQuantified = 241, RuleSimplifiedQuestioned = 242, RuleSimplifiedTertiary = 243, 
-    RuleSimplifiedDirectionOverride = 244, RuleSimplifiedOverrideLeft = 245, 
-    RuleSimplifiedOverrideUndirected = 246, RuleSimplifiedOverrideRight = 247, 
-    RuleSimplifiedOverrideLeftOrUndirected = 248, RuleSimplifiedOverrideUndirectedOrRight = 249, 
-    RuleSimplifiedOverrideLeftOrRight = 250, RuleSimplifiedOverrideAnyDirection = 251, 
-    RuleSimplifiedSecondary = 252, RuleSimplifiedNegation = 253, RuleSimplifiedPrimary = 254, 
-    RuleWhereClause = 255, RuleYieldClause = 256, RuleYieldItemList = 257, 
-    RuleYieldItem = 258, RuleYieldItemName = 259, RuleYieldItemAlias = 260, 
-    RuleGroupByClause = 261, RuleGroupingElementList = 262, RuleGroupingElement = 263, 
-    RuleEmptyGroupingSet = 264, RuleOrderByClause = 265, RuleSortSpecificationList = 266, 
-    RuleSortSpecification = 267, RuleSortKey = 268, RuleOrderingSpecification = 269, 
-    RuleNullOrdering = 270, RuleLimitClause = 271, RuleOffsetClause = 272, 
-    RuleOffsetSynonym = 273, RuleSchemaReference = 274, RuleAbsoluteCatalogSchemaReference = 275, 
-    RuleCatalogSchemaParentAndName = 276, RuleRelativeCatalogSchemaReference = 277, 
-    RulePredefinedSchemaReference = 278, RuleAbsoluteDirectoryPath = 279, 
-    RuleRelativeDirectoryPath = 280, RuleSimpleDirectoryPath = 281, RuleGraphReference = 282, 
-    RuleCatalogGraphParentAndName = 283, RuleHomeGraph = 284, RuleGraphTypeReference = 285, 
-    RuleCatalogGraphTypeParentAndName = 286, RuleBindingTableReference = 287, 
-    RuleProcedureReference = 288, RuleCatalogProcedureParentAndName = 289, 
-    RuleCatalogObjectParentReference = 290, RuleReferenceParameterSpecification = 291, 
-    RuleNestedGraphTypeSpecification = 292, RuleGraphTypeSpecificationBody = 293, 
-    RuleElementTypeList = 294, RuleElementTypeSpecification = 295, RuleNodeTypeSpecification = 296, 
-    RuleNodeTypePattern = 297, RuleNodeTypePhrase = 298, RuleNodeTypePhraseFiller = 299, 
-    RuleNodeTypeFiller = 300, RuleLocalNodeTypeAlias = 301, RuleNodeTypeImpliedContent = 302, 
-    RuleNodeTypeKeyLabelSet = 303, RuleNodeTypeLabelSet = 304, RuleNodeTypePropertyTypes = 305, 
-    RuleEdgeTypeSpecification = 306, RuleEdgeTypePattern = 307, RuleEdgeTypePhrase = 308, 
-    RuleEdgeTypePhraseFiller = 309, RuleEdgeTypeFiller = 310, RuleEdgeTypeImpliedContent = 311, 
-    RuleEdgeTypeKeyLabelSet = 312, RuleEdgeTypeLabelSet = 313, RuleEdgeTypePropertyTypes = 314, 
-    RuleEdgeTypePatternDirected = 315, RuleEdgeTypePatternPointingRight = 316, 
-    RuleEdgeTypePatternPointingLeft = 317, RuleEdgeTypePatternUndirected = 318, 
-    RuleArcTypePointingRight = 319, RuleArcTypePointingLeft = 320, RuleArcTypeUndirected = 321, 
-    RuleSourceNodeTypeReference = 322, RuleDestinationNodeTypeReference = 323, 
-    RuleEdgeKind = 324, RuleEndpointPairPhrase = 325, RuleEndpointPair = 326, 
-    RuleEndpointPairDirected = 327, RuleEndpointPairPointingRight = 328, 
-    RuleEndpointPairPointingLeft = 329, RuleEndpointPairUndirected = 330, 
-    RuleConnectorPointingRight = 331, RuleConnectorUndirected = 332, RuleSourceNodeTypeAlias = 333, 
-    RuleDestinationNodeTypeAlias = 334, RuleLabelSetPhrase = 335, RuleLabelSetSpecification = 336, 
-    RulePropertyTypesSpecification = 337, RulePropertyTypeList = 338, RulePropertyType = 339, 
-    RulePropertyValueType = 340, RuleBindingTableType = 341, RuleValueType = 342, 
-    RuleTyped = 343, RulePredefinedType = 344, RuleBooleanType = 345, RuleCharacterStringType = 346, 
-    RuleByteStringType = 347, RuleMinLength = 348, RuleMaxLength = 349, 
-    RuleFixedLength = 350, RuleNumericType = 351, RuleExactNumericType = 352, 
-    RuleBinaryExactNumericType = 353, RuleSignedBinaryExactNumericType = 354, 
-    RuleUnsignedBinaryExactNumericType = 355, RuleVerboseBinaryExactNumericType = 356, 
-    RuleDecimalExactNumericType = 357, RulePrecision = 358, RuleScale = 359, 
-    RuleApproximateNumericType = 360, RuleTemporalType = 361, RuleTemporalInstantType = 362, 
-    RuleDatetimeType = 363, RuleLocaldatetimeType = 364, RuleDateType = 365, 
-    RuleTimeType = 366, RuleLocaltimeType = 367, RuleTemporalDurationType = 368, 
-    RuleTemporalDurationQualifier = 369, RuleReferenceValueType = 370, RuleImmaterialValueType = 371, 
-    RuleNullType = 372, RuleEmptyType = 373, RuleGraphReferenceValueType = 374, 
-    RuleClosedGraphReferenceValueType = 375, RuleOpenGraphReferenceValueType = 376, 
-    RuleBindingTableReferenceValueType = 377, RuleNodeReferenceValueType = 378, 
-    RuleClosedNodeReferenceValueType = 379, RuleOpenNodeReferenceValueType = 380, 
-    RuleEdgeReferenceValueType = 381, RuleClosedEdgeReferenceValueType = 382, 
-    RuleOpenEdgeReferenceValueType = 383, RulePathValueType = 384, RuleListValueTypeName = 385, 
-    RuleListValueTypeNameSynonym = 386, RuleRecordType = 387, RuleFieldTypesSpecification = 388, 
-    RuleFieldTypeList = 389, RuleNotNull = 390, RuleFieldType = 391, RuleSearchCondition = 392, 
-    RulePredicate = 393, RuleCompOp = 394, RuleExistsPredicate = 395, RuleNullPredicate = 396, 
-    RuleNullPredicatePart2 = 397, RuleValueTypePredicate = 398, RuleValueTypePredicatePart2 = 399, 
-    RuleNormalizedPredicatePart2 = 400, RuleDirectedPredicate = 401, RuleDirectedPredicatePart2 = 402, 
-    RuleLabeledPredicate = 403, RuleLabeledPredicatePart2 = 404, RuleIsLabeledOrColon = 405, 
-    RuleSourceDestinationPredicate = 406, RuleNodeReference = 407, RuleSourcePredicatePart2 = 408, 
-    RuleDestinationPredicatePart2 = 409, RuleEdgeReference = 410, RuleAll_differentPredicate = 411, 
-    RuleSamePredicate = 412, RuleProperty_existsPredicate = 413, RuleValueExpression = 414, 
-    RuleValueFunction = 415, RuleBooleanValueExpression = 416, RuleCharacterOrByteStringFunction = 417, 
-    RuleSubCharacterOrByteString = 418, RuleTrimSingleCharacterOrByteString = 419, 
-    RuleFoldCharacterString = 420, RuleTrimMultiCharacterCharacterString = 421, 
-    RuleNormalizeCharacterString = 422, RuleNodeReferenceValueExpression = 423, 
-    RuleEdgeReferenceValueExpression = 424, RuleAggregatingValueExpression = 425, 
-    RuleValueExpressionPrimary = 426, RuleParenthesizedValueExpression = 427, 
-    RuleNonParenthesizedValueExpressionPrimary = 428, RuleNonParenthesizedValueExpressionPrimarySpecialCase = 429, 
-    RuleUnsignedValueSpecification = 430, RuleNonNegativeIntegerSpecification = 431, 
-    RuleGeneralValueSpecification = 432, RuleDynamicParameterSpecification = 433, 
-    RuleLetValueExpression = 434, RuleValueQueryExpression = 435, RuleCaseExpression = 436, 
-    RuleCaseAbbreviation = 437, RuleCaseSpecification = 438, RuleSimpleCase = 439, 
-    RuleSearchedCase = 440, RuleSimpleWhenClause = 441, RuleSearchedWhenClause = 442, 
-    RuleElseClause = 443, RuleCaseOperand = 444, RuleWhenOperandList = 445, 
-    RuleWhenOperand = 446, RuleResult = 447, RuleResultExpression = 448, 
-    RuleCastSpecification = 449, RuleCastOperand = 450, RuleCastTarget = 451, 
-    RuleAggregateFunction = 452, RuleGeneralSetFunction = 453, RuleBinarySetFunction = 454, 
-    RuleGeneralSetFunctionType = 455, RuleSetQuantifier = 456, RuleBinarySetFunctionType = 457, 
-    RuleDependentValueExpression = 458, RuleIndependentValueExpression = 459, 
-    RuleElement_idFunction = 460, RuleBindingVariableReference = 461, RulePathValueExpression = 462, 
-    RulePathValueConstructor = 463, RulePathValueConstructorByEnumeration = 464, 
-    RulePathElementList = 465, RulePathElementListStart = 466, RulePathElementListStep = 467, 
-    RuleListValueExpression = 468, RuleListValueFunction = 469, RuleTrimListFunction = 470, 
-    RuleElementsFunction = 471, RuleListValueConstructor = 472, RuleListValueConstructorByEnumeration = 473, 
-    RuleListElementList = 474, RuleListElement = 475, RuleRecordConstructor = 476, 
-    RuleFieldsSpecification = 477, RuleFieldList = 478, RuleField = 479, 
-    RuleTruthValue = 480, RuleNumericValueExpression = 481, RuleNumericValueFunction = 482, 
-    RuleLengthExpression = 483, RuleCardinalityExpression = 484, RuleCardinalityExpressionArgument = 485, 
-    RuleCharLengthExpression = 486, RuleByteLengthExpression = 487, RulePathLengthExpression = 488, 
-    RuleAbsoluteValueExpression = 489, RuleModulusExpression = 490, RuleNumericValueExpressionDividend = 491, 
-    RuleNumericValueExpressionDivisor = 492, RuleTrigonometricFunction = 493, 
-    RuleTrigonometricFunctionName = 494, RuleGeneralLogarithmFunction = 495, 
-    RuleGeneralLogarithmBase = 496, RuleGeneralLogarithmArgument = 497, 
-    RuleCommonLogarithm = 498, RuleNaturalLogarithm = 499, RuleExponentialFunction = 500, 
-    RulePowerFunction = 501, RuleNumericValueExpressionBase = 502, RuleNumericValueExpressionExponent = 503, 
-    RuleSquareRoot = 504, RuleFloorFunction = 505, RuleCeilingFunction = 506, 
-    RuleCharacterStringValueExpression = 507, RuleByteStringValueExpression = 508, 
-    RuleTrimOperands = 509, RuleTrimCharacterOrByteStringSource = 510, RuleTrimSpecification = 511, 
-    RuleTrimCharacterOrByteString = 512, RuleNormalForm = 513, RuleStringLength = 514, 
-    RuleDatetimeValueExpression = 515, RuleDatetimeValueFunction = 516, 
-    RuleDateFunction = 517, RuleTimeFunction = 518, RuleLocaltimeFunction = 519, 
-    RuleDatetimeFunction = 520, RuleLocaldatetimeFunction = 521, RuleDateFunctionParameters = 522, 
-    RuleTimeFunctionParameters = 523, RuleDatetimeFunctionParameters = 524, 
-    RuleDurationValueExpression = 525, RuleDatetimeSubtraction = 526, RuleDatetimeSubtractionParameters = 527, 
-    RuleDatetimeValueExpression1 = 528, RuleDatetimeValueExpression2 = 529, 
-    RuleDurationValueFunction = 530, RuleDurationFunction = 531, RuleDurationFunctionParameters = 532, 
-    RuleObjectName = 533, RuleObjectNameOrBindingVariable = 534, RuleDirectoryName = 535, 
-    RuleSchemaName = 536, RuleGraphName = 537, RuleDelimitedGraphName = 538, 
-    RuleGraphTypeName = 539, RuleNodeTypeName = 540, RuleEdgeTypeName = 541, 
-    RuleBindingTableName = 542, RuleDelimitedBindingTableName = 543, RuleProcedureName = 544, 
-    RuleLabelName = 545, RulePropertyName = 546, RuleFieldName = 547, RuleElementVariable = 548, 
-    RulePathVariable = 549, RuleSubpathVariable = 550, RuleBindingVariable = 551, 
-    RuleUnsignedLiteral = 552, RuleGeneralLiteral = 553, RuleTemporalLiteral = 554, 
-    RuleDateLiteral = 555, RuleTimeLiteral = 556, RuleDatetimeLiteral = 557, 
-    RuleListLiteral = 558, RuleRecordLiteral = 559, RuleIdentifier = 560, 
-    RuleRegularIdentifier = 561, RuleTimeZoneString = 562, RuleCharacterStringLiteral = 563, 
-    RuleUnsignedNumericLiteral = 564, RuleExactNumericLiteral = 565, RuleApproximateNumericLiteral = 566, 
-    RuleUnsignedInteger = 567, RuleUnsignedDecimalInteger = 568, RuleNullLiteral = 569, 
-    RuleDateString = 570, RuleTimeString = 571, RuleDatetimeString = 572, 
-    RuleDurationLiteral = 573, RuleDurationString = 574, RuleNodeSynonym = 575, 
-    RuleEdgesSynonym = 576, RuleEdgeSynonym = 577, RuleNonReservedWords = 578
+    RulePropertyGraphContent = 58, RulePgq_propertyGraphContent = 59, RulePgq_nodeTables = 60, 
+    RulePgq_edgeTables = 61, RulePgq_elementList = 62, RulePgq_element = 63, 
+    RulePgq_Alias = 64, RulePgq_elementName = 65, RulePgq_elementKeys = 66, 
+    RulePgq_nodeElementKey = 67, RulePgq_edgeElementKeys = 68, RulePgq_elementKey = 69, 
+    RulePgq_sourceKey = 70, RulePgq_destinationKey = 71, RulePgq_edgeColumnNameList = 72, 
+    RulePgq_nodeColumnNameList = 73, RulePgq_columnNameList = 74, RulePgq_columnName = 75, 
+    RulePgq_elementAliasReference = 76, RulePgq_labelAndPropertiesList = 77, 
+    RulePgq_labelAndProperties = 78, RulePgq_elementLabel = 79, RulePgq_elementProperties = 80, 
+    RulePgq_propertiesAre = 81, RulePgq_derivedPropertyList = 82, RulePgg_derivedProperty = 83, 
+    RulePgq_dynamicLabel = 84, RulePgq_dynamicLabelColumnName = 85, RulePgq_dynamicProperties = 86, 
+    RulePgq_dynamicPropertiesColumnName = 87, RuleOpenGraphType = 88, RuleOfGraphType = 89, 
+    RuleGraphTypeLikeGraph = 90, RuleGraphSource = 91, RuleDropGraphStatement = 92, 
+    RuleCreateGraphTypeStatement = 93, RuleGraphTypeSource = 94, RuleCopyOfGraphType = 95, 
+    RuleDropGraphTypeStatement = 96, RuleCallCatalogModifyingProcedureStatement = 97, 
+    RuleLinearDataModifyingStatement = 98, RuleFocusedLinearDataModifyingStatement = 99, 
+    RuleFocusedLinearDataModifyingStatementBody = 100, RuleFocusedNestedDataModifyingProcedureSpecification = 101, 
+    RuleAmbientLinearDataModifyingStatement = 102, RuleAmbientLinearDataModifyingStatementBody = 103, 
+    RuleSimpleLinearDataAccessingStatement = 104, RuleSimpleDataAccessingStatement = 105, 
+    RuleSimpleDataModifyingStatement = 106, RulePrimitiveDataModifyingStatement = 107, 
+    RuleInsertStatement = 108, RuleSetStatement = 109, RuleSetItemList = 110, 
+    RuleSetItem = 111, RuleSetPropertyItem = 112, RuleSetAllPropertiesItem = 113, 
+    RuleSetLabelItem = 114, RuleRemoveStatement = 115, RuleRemoveItemList = 116, 
+    RuleRemoveItem = 117, RuleRemovePropertyItem = 118, RuleRemoveLabelItem = 119, 
+    RuleDeleteStatement = 120, RuleDeleteItemList = 121, RuleDeleteItem = 122, 
+    RuleCallDataModifyingProcedureStatement = 123, RuleCompositeQueryStatement = 124, 
+    RuleCompositeQueryExpression = 125, RuleCompositeQueryExpressionFocused = 126, 
+    RuleCompositeQueryExpressionAmbient = 127, RuleQueryConjunction = 128, 
+    RuleSetOperator = 129, RuleCompositeQueryPrimary = 130, RuleLinearQueryStatement = 131, 
+    RuleFocusedLinearQueryStatement = 132, RuleFocusedLinearQueryStatementPart = 133, 
+    RuleFocusedLinearQueryAndPrimitiveResultStatementPart = 134, RuleFocusedPrimitiveResultStatement = 135, 
+    RuleFocusedNestedQuerySpecification = 136, RuleAmbientLinearQueryStatement = 137, 
+    RuleSimpleLinearQueryStatement = 138, RuleSimpleQueryStatement = 139, 
+    RulePrimitiveQueryStatement = 140, RuleMatchStatement = 141, RuleSimpleMatchStatement = 142, 
+    RuleOptionalMatchStatement = 143, RuleOptionalOperand = 144, RuleMatchStatementBlock = 145, 
+    RuleCallQueryStatement = 146, RuleFilterStatement = 147, RuleLetStatement = 148, 
+    RuleLetVariableDefinitionList = 149, RuleLetVariableDefinition = 150, 
+    RuleForStatement = 151, RuleForItem = 152, RuleForItemAlias = 153, RuleForItemSource = 154, 
+    RuleForOrdinalityOrOffset = 155, RuleOrderByAndPageStatement = 156, 
+    RulePrimitiveResultStatement = 157, RuleReturnStatement = 158, RuleReturnStatementBody = 159, 
+    RuleReturnItemList = 160, RuleReturnItem = 161, RuleReturnItemAlias = 162, 
+    RuleSelectStatement = 163, RuleSelectItemList = 164, RuleSelectItem = 165, 
+    RuleSelectItemAlias = 166, RuleHavingClause = 167, RuleSelectStatementBody = 168, 
+    RuleSelectGraphMatchList = 169, RuleSelectGraphMatch = 170, RuleSelectQuerySpecification = 171, 
+    RuleCallProcedureStatement = 172, RuleProcedureCall = 173, RuleInlineProcedureCall = 174, 
+    RuleVariableScopeClause = 175, RuleBindingVariableReferenceList = 176, 
+    RuleNamedProcedureCall = 177, RuleProcedureArgumentList = 178, RuleProcedureArgument = 179, 
+    RuleAtSchemaClause = 180, RuleUseGraphClause = 181, RuleGraphPatternBindingTable = 182, 
+    RuleGraphPatternYieldClause = 183, RuleGraphPatternYieldItemList = 184, 
+    RuleGraphPatternYieldItem = 185, RuleGraphPattern = 186, RuleMatchMode = 187, 
+    RuleRepeatableElementsMatchMode = 188, RuleDifferentEdgesMatchMode = 189, 
+    RuleElementBindingsOrElements = 190, RuleEdgeBindingsOrEdges = 191, 
+    RulePathPatternList = 192, RulePathPattern = 193, RulePathVariableDeclaration = 194, 
+    RuleKeepClause = 195, RuleGraphPatternWhereClause = 196, RuleInsertGraphPattern = 197, 
+    RuleInsertPathPatternList = 198, RuleInsertPathPattern = 199, RuleInsertNodePattern = 200, 
+    RuleInsertEdgePattern = 201, RuleInsertEdgePointingLeft = 202, RuleInsertEdgePointingRight = 203, 
+    RuleInsertEdgeUndirected = 204, RuleInsertElementPatternFiller = 205, 
+    RuleLabelAndPropertySetSpecification = 206, RulePathPatternPrefix = 207, 
+    RulePathModePrefix = 208, RulePathMode = 209, RulePathSearchPrefix = 210, 
+    RuleAllPathSearch = 211, RulePathOrPaths = 212, RuleAnyPathSearch = 213, 
+    RuleNumberOfPaths = 214, RuleShortestPathSearch = 215, RuleAllShortestPathSearch = 216, 
+    RuleAnyShortestPathSearch = 217, RuleCountedShortestPathSearch = 218, 
+    RuleCountedShortestGroupSearch = 219, RuleNumberOfGroups = 220, RulePathPatternExpression = 221, 
+    RulePathTerm = 222, RulePathFactor = 223, RulePathPrimary = 224, RuleElementPattern = 225, 
+    RuleNodePattern = 226, RuleElementPatternFiller = 227, RuleElementVariableDeclaration = 228, 
+    RuleIsLabelExpression = 229, RuleIsOrColon = 230, RuleElementPatternPredicate = 231, 
+    RuleElementPatternWhereClause = 232, RuleElementPropertySpecification = 233, 
+    RulePropertyKeyValuePairList = 234, RulePropertyKeyValuePair = 235, 
+    RuleEdgePattern = 236, RuleFullEdgePattern = 237, RuleFullEdgePointingLeft = 238, 
+    RuleFullEdgeUndirected = 239, RuleFullEdgePointingRight = 240, RuleFullEdgeLeftOrUndirected = 241, 
+    RuleFullEdgeUndirectedOrRight = 242, RuleFullEdgeLeftOrRight = 243, 
+    RuleFullEdgeAnyDirection = 244, RuleAbbreviatedEdgePattern = 245, RuleParenthesizedPathPatternExpression = 246, 
+    RuleSubpathVariableDeclaration = 247, RuleParenthesizedPathPatternWhereClause = 248, 
+    RuleLabelExpression = 249, RulePathVariableReference = 250, RuleElementVariableReference = 251, 
+    RuleGraphPatternQuantifier = 252, RuleFixedQuantifier = 253, RuleGeneralQuantifier = 254, 
+    RuleLowerBound = 255, RuleUpperBound = 256, RuleSimplifiedPathPatternExpression = 257, 
+    RuleSimplifiedDefaultingLeft = 258, RuleSimplifiedDefaultingUndirected = 259, 
+    RuleSimplifiedDefaultingRight = 260, RuleSimplifiedDefaultingLeftOrUndirected = 261, 
+    RuleSimplifiedDefaultingUndirectedOrRight = 262, RuleSimplifiedDefaultingLeftOrRight = 263, 
+    RuleSimplifiedDefaultingAnyDirection = 264, RuleSimplifiedContents = 265, 
+    RuleSimplifiedPathUnion = 266, RuleSimplifiedMultisetAlternation = 267, 
+    RuleSimplifiedTerm = 268, RuleSimplifiedFactorLow = 269, RuleSimplifiedFactorHigh = 270, 
+    RuleSimplifiedQuantified = 271, RuleSimplifiedQuestioned = 272, RuleSimplifiedTertiary = 273, 
+    RuleSimplifiedDirectionOverride = 274, RuleSimplifiedOverrideLeft = 275, 
+    RuleSimplifiedOverrideUndirected = 276, RuleSimplifiedOverrideRight = 277, 
+    RuleSimplifiedOverrideLeftOrUndirected = 278, RuleSimplifiedOverrideUndirectedOrRight = 279, 
+    RuleSimplifiedOverrideLeftOrRight = 280, RuleSimplifiedOverrideAnyDirection = 281, 
+    RuleSimplifiedSecondary = 282, RuleSimplifiedNegation = 283, RuleSimplifiedPrimary = 284, 
+    RuleWhereClause = 285, RuleYieldClause = 286, RuleYieldItemList = 287, 
+    RuleYieldItem = 288, RuleYieldItemName = 289, RuleYieldItemAlias = 290, 
+    RuleGroupByClause = 291, RuleGroupingElementList = 292, RuleGroupingElement = 293, 
+    RuleEmptyGroupingSet = 294, RuleOrderByClause = 295, RuleSortSpecificationList = 296, 
+    RuleSortSpecification = 297, RuleSortKey = 298, RuleOrderingSpecification = 299, 
+    RuleNullOrdering = 300, RuleLimitClause = 301, RuleOffsetClause = 302, 
+    RuleOffsetSynonym = 303, RuleSchemaReference = 304, RuleAbsoluteCatalogSchemaReference = 305, 
+    RuleCatalogSchemaParentAndName = 306, RuleRelativeCatalogSchemaReference = 307, 
+    RulePredefinedSchemaReference = 308, RuleAbsoluteDirectoryPath = 309, 
+    RuleRelativeDirectoryPath = 310, RuleSimpleDirectoryPath = 311, RuleGraphReference = 312, 
+    RuleCatalogGraphParentAndName = 313, RuleHomeGraph = 314, RuleGraphTypeReference = 315, 
+    RuleCatalogGraphTypeParentAndName = 316, RuleBindingTableReference = 317, 
+    RuleProcedureReference = 318, RuleCatalogProcedureParentAndName = 319, 
+    RuleCatalogObjectParentReference = 320, RuleReferenceParameterSpecification = 321, 
+    RuleNestedGraphTypeSpecification = 322, RuleGraphTypeSpecificationBody = 323, 
+    RuleElementTypeList = 324, RuleElementTypeSpecification = 325, RuleNodeTypeSpecification = 326, 
+    RuleNodeTypePattern = 327, RuleNodeTypePhrase = 328, RuleNodeTypePhraseFiller = 329, 
+    RuleNodeTypeFiller = 330, RuleLocalNodeTypeAlias = 331, RuleNodeTypeImpliedContent = 332, 
+    RuleNodeTypeKeyLabelSet = 333, RuleNodeTypeLabelSet = 334, RuleNodeTypePropertyTypes = 335, 
+    RuleEdgeTypeSpecification = 336, RuleEdgeTypePattern = 337, RuleEdgeTypePhrase = 338, 
+    RuleEdgeTypePhraseFiller = 339, RuleEdgeTypeFiller = 340, RuleEdgeTypeImpliedContent = 341, 
+    RuleEdgeTypeKeyLabelSet = 342, RuleEdgeTypeLabelSet = 343, RuleEdgeTypePropertyTypes = 344, 
+    RuleEdgeTypePatternDirected = 345, RuleEdgeTypePatternPointingRight = 346, 
+    RuleEdgeTypePatternPointingLeft = 347, RuleEdgeTypePatternUndirected = 348, 
+    RuleArcTypePointingRight = 349, RuleArcTypePointingLeft = 350, RuleArcTypeUndirected = 351, 
+    RuleSourceNodeTypeReference = 352, RuleDestinationNodeTypeReference = 353, 
+    RuleEdgeKind = 354, RuleEndpointPairPhrase = 355, RuleEndpointPair = 356, 
+    RuleEndpointPairDirected = 357, RuleEndpointPairPointingRight = 358, 
+    RuleEndpointPairPointingLeft = 359, RuleEndpointPairUndirected = 360, 
+    RuleConnectorPointingRight = 361, RuleConnectorUndirected = 362, RuleSourceNodeTypeAlias = 363, 
+    RuleDestinationNodeTypeAlias = 364, RuleLabelSetPhrase = 365, RuleLabelSetSpecification = 366, 
+    RulePropertyTypesSpecification = 367, RulePropertyTypeList = 368, RulePropertyType = 369, 
+    RulePropertyValueType = 370, RuleBindingTableType = 371, RuleValueType = 372, 
+    RuleTyped = 373, RulePredefinedType = 374, RuleBooleanType = 375, RuleCharacterStringType = 376, 
+    RuleByteStringType = 377, RuleMinLength = 378, RuleMaxLength = 379, 
+    RuleFixedLength = 380, RuleNumericType = 381, RuleExactNumericType = 382, 
+    RuleBinaryExactNumericType = 383, RuleSignedBinaryExactNumericType = 384, 
+    RuleUnsignedBinaryExactNumericType = 385, RuleVerboseBinaryExactNumericType = 386, 
+    RuleDecimalExactNumericType = 387, RulePrecision = 388, RuleScale = 389, 
+    RuleApproximateNumericType = 390, RuleTemporalType = 391, RuleTemporalInstantType = 392, 
+    RuleDatetimeType = 393, RuleLocaldatetimeType = 394, RuleDateType = 395, 
+    RuleTimeType = 396, RuleLocaltimeType = 397, RuleTemporalDurationType = 398, 
+    RuleTemporalDurationQualifier = 399, RuleReferenceValueType = 400, RuleImmaterialValueType = 401, 
+    RuleNullType = 402, RuleEmptyType = 403, RuleGraphReferenceValueType = 404, 
+    RuleClosedGraphReferenceValueType = 405, RuleOpenGraphReferenceValueType = 406, 
+    RuleBindingTableReferenceValueType = 407, RuleNodeReferenceValueType = 408, 
+    RuleClosedNodeReferenceValueType = 409, RuleOpenNodeReferenceValueType = 410, 
+    RuleEdgeReferenceValueType = 411, RuleClosedEdgeReferenceValueType = 412, 
+    RuleOpenEdgeReferenceValueType = 413, RulePathValueType = 414, RuleListValueTypeName = 415, 
+    RuleListValueTypeNameSynonym = 416, RuleRecordType = 417, RuleFieldTypesSpecification = 418, 
+    RuleFieldTypeList = 419, RuleNotNull = 420, RuleFieldType = 421, RuleSearchCondition = 422, 
+    RulePredicate = 423, RuleCompOp = 424, RuleExistsPredicate = 425, RuleNullPredicate = 426, 
+    RuleNullPredicatePart2 = 427, RuleValueTypePredicate = 428, RuleValueTypePredicatePart2 = 429, 
+    RuleNormalizedPredicatePart2 = 430, RuleDirectedPredicate = 431, RuleDirectedPredicatePart2 = 432, 
+    RuleLabeledPredicate = 433, RuleLabeledPredicatePart2 = 434, RuleIsLabeledOrColon = 435, 
+    RuleSourceDestinationPredicate = 436, RuleNodeReference = 437, RuleSourcePredicatePart2 = 438, 
+    RuleDestinationPredicatePart2 = 439, RuleEdgeReference = 440, RuleAll_differentPredicate = 441, 
+    RuleSamePredicate = 442, RuleProperty_existsPredicate = 443, RuleValueExpression = 444, 
+    RuleValueFunction = 445, RuleBooleanValueExpression = 446, RuleCharacterOrByteStringFunction = 447, 
+    RuleSubCharacterOrByteString = 448, RuleTrimSingleCharacterOrByteString = 449, 
+    RuleFoldCharacterString = 450, RuleTrimMultiCharacterCharacterString = 451, 
+    RuleNormalizeCharacterString = 452, RuleNodeReferenceValueExpression = 453, 
+    RuleEdgeReferenceValueExpression = 454, RuleAggregatingValueExpression = 455, 
+    RuleValueExpressionPrimary = 456, RuleParenthesizedValueExpression = 457, 
+    RuleNonParenthesizedValueExpressionPrimary = 458, RuleNonParenthesizedValueExpressionPrimarySpecialCase = 459, 
+    RuleUnsignedValueSpecification = 460, RuleNonNegativeIntegerSpecification = 461, 
+    RuleGeneralValueSpecification = 462, RuleDynamicParameterSpecification = 463, 
+    RuleLetValueExpression = 464, RuleValueQueryExpression = 465, RuleCaseExpression = 466, 
+    RuleCaseAbbreviation = 467, RuleCaseSpecification = 468, RuleSimpleCase = 469, 
+    RuleSearchedCase = 470, RuleSimpleWhenClause = 471, RuleSearchedWhenClause = 472, 
+    RuleElseClause = 473, RuleCaseOperand = 474, RuleWhenOperandList = 475, 
+    RuleWhenOperand = 476, RuleResult = 477, RuleResultExpression = 478, 
+    RuleCastSpecification = 479, RuleCastOperand = 480, RuleCastTarget = 481, 
+    RuleAggregateFunction = 482, RuleGeneralSetFunction = 483, RuleBinarySetFunction = 484, 
+    RuleGeneralSetFunctionType = 485, RuleSetQuantifier = 486, RuleBinarySetFunctionType = 487, 
+    RuleDependentValueExpression = 488, RuleIndependentValueExpression = 489, 
+    RuleElement_idFunction = 490, RuleBindingVariableReference = 491, RulePathValueExpression = 492, 
+    RulePathValueConstructor = 493, RulePathValueConstructorByEnumeration = 494, 
+    RulePathElementList = 495, RulePathElementListStart = 496, RulePathElementListStep = 497, 
+    RuleListValueExpression = 498, RuleListValueFunction = 499, RuleTrimListFunction = 500, 
+    RuleElementsFunction = 501, RuleListValueConstructor = 502, RuleListValueConstructorByEnumeration = 503, 
+    RuleListElementList = 504, RuleListElement = 505, RuleRecordConstructor = 506, 
+    RuleFieldsSpecification = 507, RuleFieldList = 508, RuleField = 509, 
+    RuleTruthValue = 510, RuleNumericValueExpression = 511, RuleNumericValueFunction = 512, 
+    RuleLengthExpression = 513, RuleCardinalityExpression = 514, RuleCardinalityExpressionArgument = 515, 
+    RuleCharLengthExpression = 516, RuleByteLengthExpression = 517, RulePathLengthExpression = 518, 
+    RuleAbsoluteValueExpression = 519, RuleModulusExpression = 520, RuleNumericValueExpressionDividend = 521, 
+    RuleNumericValueExpressionDivisor = 522, RuleTrigonometricFunction = 523, 
+    RuleTrigonometricFunctionName = 524, RuleGeneralLogarithmFunction = 525, 
+    RuleGeneralLogarithmBase = 526, RuleGeneralLogarithmArgument = 527, 
+    RuleCommonLogarithm = 528, RuleNaturalLogarithm = 529, RuleExponentialFunction = 530, 
+    RulePowerFunction = 531, RuleNumericValueExpressionBase = 532, RuleNumericValueExpressionExponent = 533, 
+    RuleSquareRoot = 534, RuleFloorFunction = 535, RuleCeilingFunction = 536, 
+    RuleCharacterStringValueExpression = 537, RuleByteStringValueExpression = 538, 
+    RuleTrimOperands = 539, RuleTrimCharacterOrByteStringSource = 540, RuleTrimSpecification = 541, 
+    RuleTrimCharacterOrByteString = 542, RuleNormalForm = 543, RuleStringLength = 544, 
+    RuleDatetimeValueExpression = 545, RuleDatetimeValueFunction = 546, 
+    RuleDateFunction = 547, RuleTimeFunction = 548, RuleLocaltimeFunction = 549, 
+    RuleDatetimeFunction = 550, RuleLocaldatetimeFunction = 551, RuleDateFunctionParameters = 552, 
+    RuleTimeFunctionParameters = 553, RuleDatetimeFunctionParameters = 554, 
+    RuleDurationValueExpression = 555, RuleDatetimeSubtraction = 556, RuleDatetimeSubtractionParameters = 557, 
+    RuleDatetimeValueExpression1 = 558, RuleDatetimeValueExpression2 = 559, 
+    RuleDurationValueFunction = 560, RuleDurationFunction = 561, RuleDurationFunctionParameters = 562, 
+    RuleObjectName = 563, RuleObjectNameOrBindingVariable = 564, RuleDirectoryName = 565, 
+    RuleSchemaName = 566, RuleGraphName = 567, RuleDelimitedGraphName = 568, 
+    RuleGraphTypeName = 569, RuleNodeTypeName = 570, RuleEdgeTypeName = 571, 
+    RuleBindingTableName = 572, RuleDelimitedBindingTableName = 573, RuleProcedureName = 574, 
+    RuleLabelName = 575, RulePropertyName = 576, RuleFieldName = 577, RuleElementVariable = 578, 
+    RulePathVariable = 579, RuleSubpathVariable = 580, RuleBindingVariable = 581, 
+    RuleUnsignedLiteral = 582, RuleGeneralLiteral = 583, RuleTemporalLiteral = 584, 
+    RuleDateLiteral = 585, RuleTimeLiteral = 586, RuleDatetimeLiteral = 587, 
+    RuleListLiteral = 588, RuleRecordLiteral = 589, RuleIdentifier = 590, 
+    RuleRegularIdentifier = 591, RuleTimeZoneString = 592, RuleCharacterStringLiteral = 593, 
+    RuleUnsignedNumericLiteral = 594, RuleExactNumericLiteral = 595, RuleApproximateNumericLiteral = 596, 
+    RuleUnsignedInteger = 597, RuleUnsignedDecimalInteger = 598, RuleNullLiteral = 599, 
+    RuleDateString = 600, RuleTimeString = 601, RuleDatetimeString = 602, 
+    RuleDurationLiteral = 603, RuleDurationString = 604, RuleNodeSynonym = 605, 
+    RuleEdgesSynonym = 606, RuleEdgeSynonym = 607, RuleNonReservedWords = 608
   };
 
   explicit GQLParser(antlr4::TokenStream *input);
@@ -395,6 +408,36 @@ public:
   class CreateSchemaStatementContext;
   class DropSchemaStatementContext;
   class CreateGraphStatementContext;
+  class PropertyGraphContentContext;
+  class Pgq_propertyGraphContentContext;
+  class Pgq_nodeTablesContext;
+  class Pgq_edgeTablesContext;
+  class Pgq_elementListContext;
+  class Pgq_elementContext;
+  class Pgq_AliasContext;
+  class Pgq_elementNameContext;
+  class Pgq_elementKeysContext;
+  class Pgq_nodeElementKeyContext;
+  class Pgq_edgeElementKeysContext;
+  class Pgq_elementKeyContext;
+  class Pgq_sourceKeyContext;
+  class Pgq_destinationKeyContext;
+  class Pgq_edgeColumnNameListContext;
+  class Pgq_nodeColumnNameListContext;
+  class Pgq_columnNameListContext;
+  class Pgq_columnNameContext;
+  class Pgq_elementAliasReferenceContext;
+  class Pgq_labelAndPropertiesListContext;
+  class Pgq_labelAndPropertiesContext;
+  class Pgq_elementLabelContext;
+  class Pgq_elementPropertiesContext;
+  class Pgq_propertiesAreContext;
+  class Pgq_derivedPropertyListContext;
+  class Pgg_derivedPropertyContext;
+  class Pgq_dynamicLabelContext;
+  class Pgq_dynamicLabelColumnNameContext;
+  class Pgq_dynamicPropertiesContext;
+  class Pgq_dynamicPropertiesColumnNameContext;
   class OpenGraphTypeContext;
   class OfGraphTypeContext;
   class GraphTypeLikeGraphContext;
@@ -1672,9 +1715,8 @@ public:
     antlr4::tree::TerminalNode *GRAPH();
     antlr4::tree::TerminalNode *OR();
     antlr4::tree::TerminalNode *REPLACE();
-    OpenGraphTypeContext *openGraphType();
-    OfGraphTypeContext *ofGraphType();
-    GraphSourceContext *graphSource();
+    PropertyGraphContentContext *propertyGraphContent();
+    Pgq_propertyGraphContentContext *pgq_propertyGraphContent();
     antlr4::tree::TerminalNode *PROPERTY();
     antlr4::tree::TerminalNode *IF();
     antlr4::tree::TerminalNode *NOT();
@@ -1684,6 +1726,402 @@ public:
   };
 
   CreateGraphStatementContext* createGraphStatement();
+
+  class  PropertyGraphContentContext : public antlr4::ParserRuleContext {
+  public:
+    PropertyGraphContentContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    OpenGraphTypeContext *openGraphType();
+    OfGraphTypeContext *ofGraphType();
+    GraphSourceContext *graphSource();
+
+   
+  };
+
+  PropertyGraphContentContext* propertyGraphContent();
+
+  class  Pgq_propertyGraphContentContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_propertyGraphContentContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_nodeTablesContext *pgq_nodeTables();
+    Pgq_edgeTablesContext *pgq_edgeTables();
+
+   
+  };
+
+  Pgq_propertyGraphContentContext* pgq_propertyGraphContent();
+
+  class  Pgq_nodeTablesContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_nodeTablesContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *NODE();
+    antlr4::tree::TerminalNode *TABLES();
+    Pgq_elementListContext *pgq_elementList();
+
+   
+  };
+
+  Pgq_nodeTablesContext* pgq_nodeTables();
+
+  class  Pgq_edgeTablesContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_edgeTablesContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *EDGE();
+    antlr4::tree::TerminalNode *TABLES();
+    Pgq_elementListContext *pgq_elementList();
+
+   
+  };
+
+  Pgq_edgeTablesContext* pgq_edgeTables();
+
+  class  Pgq_elementListContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *LEFT_PAREN();
+    std::vector<Pgq_elementContext *> pgq_element();
+    Pgq_elementContext* pgq_element(size_t i);
+    antlr4::tree::TerminalNode *RIGHT_PAREN();
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+
+   
+  };
+
+  Pgq_elementListContext* pgq_elementList();
+
+  class  Pgq_elementContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_elementNameContext *pgq_elementName();
+    Pgq_elementKeysContext *pgq_elementKeys();
+    antlr4::tree::TerminalNode *AS();
+    Pgq_AliasContext *pgq_Alias();
+    Pgq_labelAndPropertiesListContext *pgq_labelAndPropertiesList();
+    Pgq_elementPropertiesContext *pgq_elementProperties();
+    Pgq_dynamicLabelContext *pgq_dynamicLabel();
+    Pgq_dynamicPropertiesContext *pgq_dynamicProperties();
+
+   
+  };
+
+  Pgq_elementContext* pgq_element();
+
+  class  Pgq_AliasContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_AliasContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+
+   
+  };
+
+  Pgq_AliasContext* pgq_Alias();
+
+  class  Pgq_elementNameContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementNameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+
+   
+  };
+
+  Pgq_elementNameContext* pgq_elementName();
+
+  class  Pgq_elementKeysContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementKeysContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_nodeElementKeyContext *pgq_nodeElementKey();
+    Pgq_edgeElementKeysContext *pgq_edgeElementKeys();
+
+   
+  };
+
+  Pgq_elementKeysContext* pgq_elementKeys();
+
+  class  Pgq_nodeElementKeyContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_nodeElementKeyContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_elementKeyContext *pgq_elementKey();
+
+   
+  };
+
+  Pgq_nodeElementKeyContext* pgq_nodeElementKey();
+
+  class  Pgq_edgeElementKeysContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_edgeElementKeysContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_sourceKeyContext *pgq_sourceKey();
+    Pgq_destinationKeyContext *pgq_destinationKey();
+    Pgq_elementKeyContext *pgq_elementKey();
+
+   
+  };
+
+  Pgq_edgeElementKeysContext* pgq_edgeElementKeys();
+
+  class  Pgq_elementKeyContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementKeyContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *KEY();
+    Pgq_columnNameListContext *pgq_columnNameList();
+
+   
+  };
+
+  Pgq_elementKeyContext* pgq_elementKey();
+
+  class  Pgq_sourceKeyContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_sourceKeyContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *SOURCE();
+    antlr4::tree::TerminalNode *KEY();
+    Pgq_edgeColumnNameListContext *pgq_edgeColumnNameList();
+    antlr4::tree::TerminalNode *REFERENCES();
+    Pgq_elementAliasReferenceContext *pgq_elementAliasReference();
+    Pgq_nodeColumnNameListContext *pgq_nodeColumnNameList();
+
+   
+  };
+
+  Pgq_sourceKeyContext* pgq_sourceKey();
+
+  class  Pgq_destinationKeyContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_destinationKeyContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *DESTINATION();
+    antlr4::tree::TerminalNode *KEY();
+    Pgq_edgeColumnNameListContext *pgq_edgeColumnNameList();
+    antlr4::tree::TerminalNode *REFERENCES();
+    Pgq_elementAliasReferenceContext *pgq_elementAliasReference();
+    Pgq_nodeColumnNameListContext *pgq_nodeColumnNameList();
+
+   
+  };
+
+  Pgq_destinationKeyContext* pgq_destinationKey();
+
+  class  Pgq_edgeColumnNameListContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_edgeColumnNameListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_columnNameListContext *pgq_columnNameList();
+
+   
+  };
+
+  Pgq_edgeColumnNameListContext* pgq_edgeColumnNameList();
+
+  class  Pgq_nodeColumnNameListContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_nodeColumnNameListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_columnNameListContext *pgq_columnNameList();
+
+   
+  };
+
+  Pgq_nodeColumnNameListContext* pgq_nodeColumnNameList();
+
+  class  Pgq_columnNameListContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_columnNameListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *LEFT_PAREN();
+    std::vector<Pgq_columnNameContext *> pgq_columnName();
+    Pgq_columnNameContext* pgq_columnName(size_t i);
+    antlr4::tree::TerminalNode *RIGHT_PAREN();
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+
+   
+  };
+
+  Pgq_columnNameListContext* pgq_columnNameList();
+
+  class  Pgq_columnNameContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_columnNameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+
+   
+  };
+
+  Pgq_columnNameContext* pgq_columnName();
+
+  class  Pgq_elementAliasReferenceContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementAliasReferenceContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+
+   
+  };
+
+  Pgq_elementAliasReferenceContext* pgq_elementAliasReference();
+
+  class  Pgq_labelAndPropertiesListContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_labelAndPropertiesListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<Pgq_labelAndPropertiesContext *> pgq_labelAndProperties();
+    Pgq_labelAndPropertiesContext* pgq_labelAndProperties(size_t i);
+
+   
+  };
+
+  Pgq_labelAndPropertiesListContext* pgq_labelAndPropertiesList();
+
+  class  Pgq_labelAndPropertiesContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_labelAndPropertiesContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    Pgq_elementLabelContext *pgq_elementLabel();
+    Pgq_elementPropertiesContext *pgq_elementProperties();
+
+   
+  };
+
+  Pgq_labelAndPropertiesContext* pgq_labelAndProperties();
+
+  class  Pgq_elementLabelContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementLabelContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *LABEL();
+    LabelNameContext *labelName();
+    antlr4::tree::TerminalNode *DEFAULT();
+
+   
+  };
+
+  Pgq_elementLabelContext* pgq_elementLabel();
+
+  class  Pgq_elementPropertiesContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_elementPropertiesContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *NO();
+    antlr4::tree::TerminalNode *PROPERTIES();
+    Pgq_propertiesAreContext *pgq_propertiesAre();
+    Pgq_derivedPropertyListContext *pgq_derivedPropertyList();
+
+   
+  };
+
+  Pgq_elementPropertiesContext* pgq_elementProperties();
+
+  class  Pgq_propertiesAreContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_propertiesAreContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *PROPERTIES();
+    antlr4::tree::TerminalNode *ALL();
+    antlr4::tree::TerminalNode *COLUMNS();
+    antlr4::tree::TerminalNode *ARE();
+    antlr4::tree::TerminalNode *EXCEPT();
+    Pgq_columnNameListContext *pgq_columnNameList();
+
+   
+  };
+
+  Pgq_propertiesAreContext* pgq_propertiesAre();
+
+  class  Pgq_derivedPropertyListContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_derivedPropertyListContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *PROPERTIES();
+    antlr4::tree::TerminalNode *LEFT_PAREN();
+    std::vector<Pgg_derivedPropertyContext *> pgg_derivedProperty();
+    Pgg_derivedPropertyContext* pgg_derivedProperty(size_t i);
+    antlr4::tree::TerminalNode *RIGHT_PAREN();
+    std::vector<antlr4::tree::TerminalNode *> COMMA();
+    antlr4::tree::TerminalNode* COMMA(size_t i);
+
+   
+  };
+
+  Pgq_derivedPropertyListContext* pgq_derivedPropertyList();
+
+  class  Pgg_derivedPropertyContext : public antlr4::ParserRuleContext {
+  public:
+    Pgg_derivedPropertyContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    ValueExpressionContext *valueExpression();
+    antlr4::tree::TerminalNode *AS();
+    PropertyNameContext *propertyName();
+
+   
+  };
+
+  Pgg_derivedPropertyContext* pgg_derivedProperty();
+
+  class  Pgq_dynamicLabelContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_dynamicLabelContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *DYNAMIC();
+    antlr4::tree::TerminalNode *LABEL();
+    antlr4::tree::TerminalNode *LEFT_PAREN();
+    Pgq_dynamicLabelColumnNameContext *pgq_dynamicLabelColumnName();
+    antlr4::tree::TerminalNode *RIGHT_PAREN();
+
+   
+  };
+
+  Pgq_dynamicLabelContext* pgq_dynamicLabel();
+
+  class  Pgq_dynamicLabelColumnNameContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_dynamicLabelColumnNameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+
+   
+  };
+
+  Pgq_dynamicLabelColumnNameContext* pgq_dynamicLabelColumnName();
+
+  class  Pgq_dynamicPropertiesContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_dynamicPropertiesContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *DYNAMIC();
+    antlr4::tree::TerminalNode *PROPERTIES();
+    antlr4::tree::TerminalNode *LEFT_PAREN();
+    Pgq_dynamicPropertiesColumnNameContext *pgq_dynamicPropertiesColumnName();
+    antlr4::tree::TerminalNode *RIGHT_PAREN();
+
+   
+  };
+
+  Pgq_dynamicPropertiesContext* pgq_dynamicProperties();
+
+  class  Pgq_dynamicPropertiesColumnNameContext : public antlr4::ParserRuleContext {
+  public:
+    Pgq_dynamicPropertiesColumnNameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    IdentifierContext *identifier();
+
+   
+  };
+
+  Pgq_dynamicPropertiesColumnNameContext* pgq_dynamicPropertiesColumnName();
 
   class  OpenGraphTypeContext : public antlr4::ParserRuleContext {
   public:
@@ -9015,6 +9453,7 @@ public:
     antlr4::tree::TerminalNode *ONLY();
     antlr4::tree::TerminalNode *ORDINALITY();
     antlr4::tree::TerminalNode *PROPERTY();
+    antlr4::tree::TerminalNode *PROPERTIES();
     antlr4::tree::TerminalNode *READ();
     antlr4::tree::TerminalNode *RELATIONSHIP();
     antlr4::tree::TerminalNode *RELATIONSHIPS();
