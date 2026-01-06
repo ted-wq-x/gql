@@ -2802,8 +2802,17 @@ struct ASTBuilder {
     for (auto elementCtx : ctx->pgq_element()) {
       auto& pgqElement = tables.emplace_back();
       AssignInputPosition(elementCtx, pgqElement);
+      AssignInputPosition(elementCtx->pgq_elementName(),
+                          pgqElement.elementName);
+      if (auto ctx2 = elementCtx->pgq_elementName()
+                          ->pgq_catalogObjectParentReference()) {
+        for (auto ctx3 : ctx2->objectName()) {
+          BuildAST(ctx3->identifier(),
+                   pgqElement.elementName.path.emplace_back());
+        }
+      }
       BuildAST(elementCtx->pgq_elementName()->identifier(),
-               pgqElement.elementName);
+               pgqElement.elementName.elementName);
       if (auto alias = elementCtx->pgq_Alias()) {
         BuildAST(alias->identifier(), pgqElement.alias.emplace());
       }

@@ -349,8 +349,6 @@ struct PgqElementAliasReference : IdentifierBase,
                                   NodeBase<PgqElementAliasReference> {};
 GQL_AST_STRUCT(PgqElementAliasReference, name)
 
-struct PgqElementName : IdentifierBase, NodeBase<PgqElementName> {};
-GQL_AST_STRUCT(PgqElementName, name)
 
 struct PgqAlias : IdentifierBase, NodeBase<PgqAlias> {};
 GQL_AST_STRUCT(PgqAlias, name)

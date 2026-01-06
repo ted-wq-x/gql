@@ -104,7 +104,11 @@ template <>
 struct Printer<PgqElement> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const PgqElement& v) {
-    os << v.elementName.name;
+    os << Sequence(v.elementName.path, ".");
+    if (!v.elementName.path.empty()) {
+      os << ".";
+    }
+    os << v.elementName.elementName;
     if (v.alias) {
       os << "AS" << *v.alias;
     }

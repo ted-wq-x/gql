@@ -504,6 +504,12 @@ GQL_AST_STRUCT(PgqEdgeElementKeys, key, sourceKey, destinationKey)
 
 using PgqElementKeys = std::variant<PgqNodeElementKey, PgqEdgeElementKeys>;
 
+struct PgqElementName : NodeBase<PgqElementName> {
+  std::vector<ObjectName> path;
+  Identifier elementName;
+};
+GQL_AST_STRUCT(PgqElementName, path, elementName)
+
 struct PgqElement : NodeBase<PgqElement> {
   PgqElementName elementName;
   std::optional<PgqAlias> alias;

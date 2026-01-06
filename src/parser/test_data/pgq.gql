@@ -14,8 +14,8 @@ CREATE PROPERTY GRAPH FinGraph
 
 CREATE OR REPLACE PROPERTY GRAPH FinGraph
   NODE TABLES (
-    Account,
-    Person
+    A.B.Account,
+    C.Person
   )
   EDGE TABLES (
     PersonOwnAccount
