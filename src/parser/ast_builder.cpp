@@ -2709,8 +2709,9 @@ struct ASTBuilder {
     for (auto& propertyCtx : ctx->pgg_derivedProperty()) {
       auto& property = properties.emplace_back();
       BuildAST(propertyCtx->valueExpression(), property.expr);
-      BuildAST(propertyCtx->propertyName()->identifier(),
-               property.name.emplace());
+      if (auto alias = propertyCtx->propertyName()) {
+        BuildAST(alias->identifier(), property.name.emplace());
+      }
     }
   }
 

@@ -131,6 +131,15 @@ ast::ValueType SyntaxAnalyzer::Process(const ast::ValueType& type,
               }
             }
             break;
+            // todo wq
+          case ast::StringType::Kind::STRING:
+            break;
+          case ast::StringType::Kind::VARCHAR:
+            break;
+          case ast::StringType::Kind::BINARY:
+            break;
+          case ast::StringType::Kind::VARBINARY:
+            break;
         }
         if (value.maxLength) {
           if (*value.maxLength == 0) {

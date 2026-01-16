@@ -89,6 +89,8 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
                     ThrowIfFeatureNotSupported(standard::Feature::GS07,
                                                resetCmd);
                     break;
+                  case ast::SessionResetArguments::QueryLang:
+                    break;
                 }
               },
               [&](const ast::GeneralParameterReference& value) {
