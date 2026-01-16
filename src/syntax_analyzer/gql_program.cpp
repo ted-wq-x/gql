@@ -47,7 +47,7 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
   OptBindingTableType outcome;
   ExecutionContext context;
   ast::variant_switch(
-      program.programActivity,
+      program.option,
       [&](ast::SessionActivity& value) {
         for (auto& setCmd : value.setCommands) {
           ast::variant_switch(
@@ -121,7 +121,8 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
           outcome = ProcessAndSaveType(*transaction.procedure, context,
                                        CallProcedureKind::Any);
         }
-      });
+      },
+      [&](ast::ShowCommand&) {}, [&](ast::ExplainCommand&) {});
   if (program.sessionCloseCommand) {
     outcome.reset();
   }

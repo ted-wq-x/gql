@@ -3653,16 +3653,41 @@ struct ASTBuilder {
     }
   }
 
+  void BuildAST(GQLParser::ShowCommandContext* ctx, ast::ShowCommand& value) {
+    AssignInputPosition(ctx, value);
+    if (dynamic_cast<GQLParser::ShowGraphsContext*>(ctx)) {
+      value.option.emplace<ast::ShowGraphs>();
+    }
+    if (auto ctx2 = dynamic_cast<GQLParser::ShowCreateGraphContext*>(ctx)) {
+      BuildAST(ctx2->catalogGraphParentAndName(),
+               value.option.emplace<ast::ShowCreateGraph>().graph);
+    }
+    if (dynamic_cast<GQLParser::ShowCurrentGraphContext*>(ctx)) {
+      value.option.emplace<ast::ShowCurrentGraph>();
+    }
+  }
+
   void BuildAST(GQLParser::GqlProgramContext* ctx, ast::GQLProgram& value) {
     AssignInputPosition(ctx, value);
     if (auto* ctx2 = ctx->programActivity()) {
       if (auto* ctx3 = ctx2->sessionActivity()) {
-        BuildAST(ctx3, value.programActivity.emplace<ast::SessionActivity>());
+        BuildAST(ctx3, value.option.emplace<ast::SessionActivity>());
       }
       if (auto* ctx3 = ctx2->transactionActivity()) {
-        BuildAST(ctx3,
-                 value.programActivity.emplace<ast::TransactionActivity>());
+        BuildAST(ctx3, value.option.emplace<ast::TransactionActivity>());
       }
+    }
+    if (auto* ctx2 = ctx->showCommand()) {
+      BuildAST(ctx2, value.option.emplace<ast::ShowCommand>());
+    }
+    if (auto* ctx2 = ctx->explainCommand()) {
+      auto& explain = value.option.emplace<ast::ExplainCommand>();
+      AssignInputPosition(ctx2, explain);
+      if (ctx2->ANALYZE() != nullptr) {
+        explain.is_analyze = true;
+      }
+      BuildAST(ctx2->procedureSpecification()->procedureBody(),
+               explain.procedure);
     }
 
     if (ctx->sessionCloseCommand() != nullptr) {

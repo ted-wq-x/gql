@@ -820,10 +820,36 @@ struct Printer<CompositeQueryExpression> {
 };
 
 template <>
+struct Printer<ShowCommand> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const ShowCommand& v) {
+    variant_switch(
+        v.option, [&](const ShowCurrentGraph&) { os << "SHOW CURRENT_GRAPH"; },
+        [&](const ShowGraphs&) { os << "SHOW GRAPHS"; },
+        [&](const ShowCreateGraph& show) {
+          os << "SHOW CREATE GRAPH ";
+          os << show.graph;
+        });
+  }
+};
+
+template <>
+struct Printer<ExplainCommand> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const ExplainCommand& v) {
+    os << "EXPLAIN";
+    if (v.is_analyze) {
+      os << "ANALYZE";
+    }
+    os << v.procedure;
+  }
+};
+
+template <>
 struct Printer<GQLProgram> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const GQLProgram& v) {
-    os << v.programActivity;
+    os << v.option;
     if (v.sessionCloseCommand)
       os << "SESSION CLOSE";
   }

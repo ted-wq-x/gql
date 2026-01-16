@@ -1366,6 +1366,28 @@ struct TransactionActivity : NodeBase<TransactionActivity> {
 };
 GQL_AST_STRUCT(TransactionActivity, startCmd, procedure, endCmd)
 
+struct ShowCreateGraph : NodeBase<ShowCreateGraph> {
+  CatalogGraphParentAndName graph;
+};
+GQL_AST_STRUCT(ShowCreateGraph, graph)
+
+struct ShowGraphs {};
+GQL_AST_VALUE(ShowGraphs)
+
+struct ShowCurrentGraph {};
+GQL_AST_VALUE(ShowCurrentGraph)
+
+struct ShowCommand : NodeBase<ShowCommand> {
+  std::variant<ShowGraphs, ShowCurrentGraph, ShowCreateGraph> option;
+};
+GQL_AST_STRUCT(ShowCommand, option)
+
+struct ExplainCommand : NodeBase<ExplainCommand> {
+  bool is_analyze;
+  ProcedureBody procedure;
+};
+GQL_AST_STRUCT(ExplainCommand, is_analyze, procedure)
+
 // programActivity
 //    : sessionActivity
 //    | transactionActivity
@@ -1375,9 +1397,11 @@ GQL_AST_STRUCT(TransactionActivity, startCmd, procedure, endCmd)
 //    : programActivity sessionCloseCommand? EOF
 //    | sessionCloseCommand EOF
 struct GQLProgram : NodeBase<GQLProgram> {
-  std::variant<SessionActivity, TransactionActivity> programActivity;
+  std::
+      variant<SessionActivity, TransactionActivity, ExplainCommand, ShowCommand>
+          option;
   bool sessionCloseCommand = false;
 };
-GQL_AST_STRUCT(GQLProgram, programActivity, sessionCloseCommand)
+GQL_AST_STRUCT(GQLProgram, option, sessionCloseCommand)
 
 }  // namespace gql::ast
