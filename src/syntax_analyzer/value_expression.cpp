@@ -776,7 +776,7 @@ ast::ValueType SyntaxAnalyzer::Process(ast::UnsignedLiteral& expr,
             },
             [&](const ast::NullLiteral&) {
               // TODO:
-              return MakeValueType(ast::SimplePredefinedType::Boolean);
+              return MakeValueType(ast::SimplePredefinedType::Null);
             },
             [&](ast::ListLiteral& listLiteral) {
               ThrowIfFeatureNotSupported(standard::Feature::GV50, listLiteral);
@@ -793,6 +793,13 @@ ast::ValueType SyntaxAnalyzer::Process(ast::UnsignedLiteral& expr,
               std::optional<ast::ValueType> lastValueType;
               for (auto& item : listLiteral.elements) {
                 auto valueType = ProcessValueExpression(*item, context);
+                if (std::holds_alternative<ast::SimplePredefinedType>(
+                        valueType.typeOption) &&
+                    std::get<ast::SimplePredefinedType>(valueType.typeOption) ==
+                        ast::SimplePredefinedType::Null) {
+                  continue;
+                }
+
                 if (lastValueType) {
                   if (valueType != *lastValueType) {
                     // TODO: 22.18
@@ -802,7 +809,13 @@ ast::ValueType SyntaxAnalyzer::Process(ast::UnsignedLiteral& expr,
                   lastValueType = valueType;
                 }
               }
-              listType.valueType = *lastValueType;
+              if (lastValueType) {
+                listType.valueType = *lastValueType;
+              } else {
+                listType.valueType =
+                    MakeValueType(ast::SimplePredefinedType::Null);
+              }
+
               return MakeValueType(listType);
             },
             [&](ast::RecordLiteral& recordLiteral) {
