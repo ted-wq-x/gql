@@ -136,7 +136,6 @@ class SyntaxAnalyzer {
     // |ValueExpression| is handled differently depending on the calling site
     // (see Process*ValueExpression functions). This function protects against
     // accidentally calling it directly or indirectly by ProcessFallback.
-    static_assert(false);
     return {};
   }
 
