@@ -1346,6 +1346,10 @@ struct ASTBuilder {
   }
 
   void BuildAST(GQLParser::NormalFormContext* ctx, ast::NormalForm& value) {
+    if (ctx == nullptr) {
+      value = ast::NormalForm::NFC;
+      return;
+    }
     if (ctx->NFC() != nullptr) {
       value = ast::NormalForm::NFC;
     } else if (ctx->NFD() != nullptr) {
