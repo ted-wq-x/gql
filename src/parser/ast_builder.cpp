@@ -2444,14 +2444,14 @@ struct ASTBuilder {
       } else if (auto ctx3 = ctx2->shortestPathSearch()) {
         if (auto ctx4 = ctx3->allShortestPathSearch()) {
           pathSearch.search =
-              ast::PathSearchPrefix::Search::CountedShortestGroup;
+              ast::PathSearchPrefix::Search::AllShortestPath;
           pathSearch.number = 1u;
           if (auto ctx5 = ctx4->pathMode()) {
             BuildAST(ctx5, value.mode);
           }
         } else if (auto ctx4 = ctx3->anyShortestPathSearch()) {
           pathSearch.search =
-              ast::PathSearchPrefix::Search::CountedShortestPath;
+              ast::PathSearchPrefix::Search::AnyShortestPath;
           pathSearch.number = 1u;
           if (auto ctx5 = ctx4->pathMode()) {
             BuildAST(ctx5, value.mode);

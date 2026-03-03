@@ -169,19 +169,17 @@ void SyntaxAnalyzer::Process(const ast::PathPatternPrefix& prefix,
       case ast::PathSearchPrefix::Search::Any:
         ThrowIfFeatureNotSupported(standard::Feature::G016, prefix);
         break;
+      case ast::PathSearchPrefix::Search::AllShortestPath:
+        ThrowIfFeatureNotSupported(standard::Feature::G017, prefix);
+        break;
+      case ast::PathSearchPrefix::Search::AnyShortestPath:
+        ThrowIfFeatureNotSupported(standard::Feature::G018, prefix);
+        break;
       case ast::PathSearchPrefix::Search::CountedShortestGroup:
-        if (auto* num = std::get_if<ast::UnsignedInteger>(&value.number)) {
-          if (*num == 1) {
-            ThrowIfFeatureNotSupported(standard::Feature::G017, prefix);
-          }
-        }
         ThrowIfFeatureNotSupported(standard::Feature::G020, prefix);
         break;
       case ast::PathSearchPrefix::Search::CountedShortestPath:
         if (auto* num = std::get_if<ast::UnsignedInteger>(&value.number)) {
-          if (*num == 1) {
-            ThrowIfFeatureNotSupported(standard::Feature::G018, prefix);
-          }
         }
         ThrowIfFeatureNotSupported(standard::Feature::G019, prefix);
         break;

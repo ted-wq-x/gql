@@ -557,6 +557,12 @@ struct Printer<PathPatternPrefix> {
           }
           os << "SHORTEST" << psp.number << v.mode << "PATH GROUPS";
           break;
+        case PathSearchPrefix::Search::AllShortestPath:
+          os << "ALL SHORTEST" << v.mode << "PATHS";
+          break;
+        case PathSearchPrefix::Search::AnyShortestPath:
+          os << "ANY SHORTEST" << v.mode << "PATHS";
+          break;
       }
     } else {
       os << v.mode << "PATHS";

@@ -831,6 +831,8 @@ struct PathSearchPrefix {
   enum class Search {
     All,
     Any,
+    AllShortestPath,
+    AnyShortestPath,
     CountedShortestPath,
     CountedShortestGroup,
   };
