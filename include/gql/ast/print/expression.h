@@ -126,6 +126,50 @@ struct Printer<NormalizeCharacterString> {
 };
 
 template <>
+struct Printer<ListContainsFunction> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const ListContainsFunction& v) {
+    os << "LIST_CONTAINS(" << v.list << "," << v.value << ")";
+  }
+};
+
+template <>
+struct Printer<LambdaExpression> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const LambdaExpression& v) {
+    os << "LAMBDA " << Sequence(v.parameters, ",") << ":" << v.expr;
+  }
+};
+
+template <>
+struct Printer<TransformLambdaFunction> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const TransformLambdaFunction& v) {
+    os << "TRANSFORM(" << v.list << "," << v.lambda << ")";
+  }
+};
+
+template <>
+struct Printer<FilterLambdaFunction> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const FilterLambdaFunction& v) {
+    os << "FILTER(" << v.list << "," << v.lambda << ")";
+  }
+};
+
+template <>
+struct Printer<ReduceLambdaFunction> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const ReduceLambdaFunction& v) {
+    os << "REDUCE(" << v.list << "," << v.lambda;
+    if (v.initialValue) {
+      os << "," << *v.initialValue;
+    }
+    os << ")";
+  }
+};
+
+template <>
 struct Printer<PathValueConstructor> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const PathValueConstructor& v) {

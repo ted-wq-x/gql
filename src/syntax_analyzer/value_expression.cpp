@@ -611,7 +611,46 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ValueFunction& expr,
       },
       [&](ast::NormalizeCharacterString& func) {
         return ProcessCharacterStringValueExpression(*func.expr, context);
-      });
+      },
+      [&](ast::ListContainsFunction& func) { return Process(func, context); },
+      [&](ast::TransformLambdaFunction& func) {
+        return Process(func, context);
+      },
+      [&](ast::FilterLambdaFunction& func) { return Process(func, context); },
+      [&](ast::ReduceLambdaFunction& func) { return Process(func, context); });
+}
+
+ast::ValueType SyntaxAnalyzer::Process(ast::ListContainsFunction& expr,
+                                       const ExecutionContext& context) {
+  auto listType = ProcessListValueExpression(*expr.list, context);
+  auto valueType = ProcessValueExpression(*expr.value, context);
+  auto resultType = MakeValueType(ast::SimplePredefinedType::Boolean);
+  resultType.notNull = listType.notNull && valueType.notNull;
+  return resultType;
+}
+
+ast::ValueType SyntaxAnalyzer::Process(ast::TransformLambdaFunction& expr,
+                                       const ExecutionContext& context) {
+  ProcessListValueExpression(*expr.list, context);
+  ProcessValueExpression(*expr.lambda.expr, context);
+  return MakeValueType(ast::ValueType::List{});
+}
+
+ast::ValueType SyntaxAnalyzer::Process(ast::FilterLambdaFunction& expr,
+                                       const ExecutionContext& context) {
+  ProcessListValueExpression(*expr.list, context);
+  ProcessBooleanValueExpression(*expr.lambda.expr, context);
+  return MakeValueType(ast::ValueType::List{});
+}
+
+ast::ValueType SyntaxAnalyzer::Process(ast::ReduceLambdaFunction& expr,
+                                       const ExecutionContext& context) {
+  ProcessListValueExpression(*expr.list, context);
+  ProcessValueExpression(*expr.lambda.expr, context);
+  if (expr.initialValue) {
+    return ProcessValueExpression(**expr.initialValue, context);
+  }
+  return MakeValueType(ast::SimplePredefinedType::Any);
 }
 
 ast::ValueType SyntaxAnalyzer::ProcessAggregateFunctionOperand(

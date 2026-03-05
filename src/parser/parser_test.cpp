@@ -103,6 +103,23 @@ TEST(ParserTest, ParseError) {
       gql::ParserError);
 }
 
+TEST(ParserTest, ParseLambdaFunctions) {
+  const char query[] = R"(
+SESSION SET VALUE $P1 = TRANSFORM([1, 2, 3], LAMBDA x : x + 1)
+SESSION SET VALUE $P2 = FILTER([1, 2, 3], LAMBDA x : x > 1)
+SESSION SET VALUE $P3 = REDUCE([1, 2, 3], LAMBDA acc, x : acc + x, 0)
+)";
+
+  gql::ast::GQLProgram program = gql::parser::ParseProgram(query);
+
+  EXPECT_TRUE(gql::ast::FindFirstNodeOfType<gql::ast::TransformLambdaFunction>(
+      program));
+  EXPECT_TRUE(
+      gql::ast::FindFirstNodeOfType<gql::ast::FilterLambdaFunction>(program));
+  EXPECT_TRUE(
+      gql::ast::FindFirstNodeOfType<gql::ast::ReduceLambdaFunction>(program));
+}
+
 TEST(ASTTest, StaticCheck) {
   gql::ast::GQLProgram value;
   gql::ast::GQLProgram value2 = value;

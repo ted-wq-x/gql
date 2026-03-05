@@ -182,6 +182,11 @@ class SyntaxAnalyzer {
   ast::ValueType Process(ast::ValueExpression::BooleanTest&,
                          const ExecutionContext&);
   ast::ValueType Process(ast::ValueFunction&, const ExecutionContext&);
+  ast::ValueType Process(ast::ListContainsFunction&, const ExecutionContext&);
+  ast::ValueType Process(ast::TransformLambdaFunction&,
+                         const ExecutionContext&);
+  ast::ValueType Process(ast::FilterLambdaFunction&, const ExecutionContext&);
+  ast::ValueType Process(ast::ReduceLambdaFunction&, const ExecutionContext&);
   ast::ValueType Process(ast::AggregateFunction&,
                          const ast::Node&,
                          const ExecutionContext&);

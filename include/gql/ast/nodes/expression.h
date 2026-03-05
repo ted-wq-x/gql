@@ -725,9 +725,61 @@ GQL_AST_STRUCT(DatetimeSubtraction, param1, param2, qualifier)
 //     : ELEMENTS LEFT_PAREN pathValueExpression RIGHT_PAREN
 //     ;
 
+// listContainsFunction
+//     : LIST_CONTAINS LEFT_PAREN listValueExpression COMMA valueExpression
+//     RIGHT_PAREN
+//     ;
+struct ListContainsFunction : NodeBase<ListContainsFunction> {
+  ValueExpressionPtr list;
+  ValueExpressionPtr value;
+};
+GQL_AST_STRUCT(ListContainsFunction, list, value)
+
+// lambdaExpression
+//     : LAMBDA lambdaParameterNameList COLON valueExpression
+//     ;
+struct LambdaExpression : NodeBase<LambdaExpression> {
+  std::vector<Identifier> parameters;
+  ValueExpressionPtr expr;
+};
+GQL_AST_STRUCT(LambdaExpression, parameters, expr)
+
+// transformLambdaFunction
+//     : TRANSFORM LEFT_PAREN listValueExpression COMMA lambdaExpression
+//     RIGHT_PAREN
+//     ;
+struct TransformLambdaFunction : NodeBase<TransformLambdaFunction> {
+  ValueExpressionPtr list;
+  LambdaExpression lambda;
+};
+GQL_AST_STRUCT(TransformLambdaFunction, list, lambda)
+
+// filterLambdaFunction
+//     : FILTER LEFT_PAREN listValueExpression COMMA lambdaExpression
+//     RIGHT_PAREN
+//     ;
+struct FilterLambdaFunction : NodeBase<FilterLambdaFunction> {
+  ValueExpressionPtr list;
+  LambdaExpression lambda;
+};
+GQL_AST_STRUCT(FilterLambdaFunction, list, lambda)
+
+// reduceLambdaFunction
+//     : REDUCE LEFT_PAREN listValueExpression COMMA lambdaExpression (COMMA
+//     valueExpression)? RIGHT_PAREN
+//     ;
+struct ReduceLambdaFunction : NodeBase<ReduceLambdaFunction> {
+  ValueExpressionPtr list;
+  LambdaExpression lambda;
+  std::optional<ValueExpressionPtr> initialValue;
+};
+GQL_AST_STRUCT(ReduceLambdaFunction, list, lambda, initialValue)
+
 // listValueFunction
 //     : trimListFunction
 //     | elementsFunction
+//     | listContainsFunction
+//     | lambdaFunction
 //     ;
 
 // valueFunction
@@ -744,7 +796,11 @@ using ValueFunction = std::variant<DatetimeSubtraction,
                                    TrimSingleCharacterOrByteString,
                                    FoldCharacterString,
                                    TrimMultiCharacterCharacterString,
-                                   NormalizeCharacterString>;
+                                   NormalizeCharacterString,
+                                   ListContainsFunction,
+                                   TransformLambdaFunction,
+                                   FilterLambdaFunction,
+                                   ReduceLambdaFunction>;
 
 // nonParenthesizedValueExpressionPrimarySpecialCase
 //     : aggregateFunction
@@ -1068,6 +1124,9 @@ struct ValueExpression : NodeBase<ValueExpression> {
       GeneralLogarithm,
       Modulus,
       TrimList,
+      ReduceLambda,
+      FilterLambda,
+      transformLambda,
     };
 
     Op op = Op::Multiply;

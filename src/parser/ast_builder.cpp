@@ -1813,6 +1813,46 @@ struct ASTBuilder {
     BuildAST(ctx->numericValueExpression(), *value.right);
   }
 
+  void BuildAST(GQLParser::LambdaExpressionContext* ctx,
+                ast::LambdaExpression& value) {
+    AssignInputPosition(ctx, value);
+    for (auto* param : ctx->lambdaParameterNameList()->lambdaParameterName()) {
+      BuildAST(param->identifier(), value.parameters.emplace_back());
+    }
+    BuildAST(ctx->valueExpression(), *value.expr);
+  }
+
+  void BuildAST(GQLParser::ListContainsFunctionContext* ctx,
+                ast::ListContainsFunction& value) {
+    AssignInputPosition(ctx, value);
+    BuildAST(ctx->listValueExpression()->valueExpression(), *value.list);
+    BuildAST(ctx->valueExpression(), *value.value);
+  }
+
+  void BuildAST(GQLParser::TransformLambdaFunctionContext* ctx,
+                ast::TransformLambdaFunction& value) {
+    AssignInputPosition(ctx, value);
+    BuildAST(ctx->listValueExpression()->valueExpression(), *value.list);
+    BuildAST(ctx->lambdaExpression(), value.lambda);
+  }
+
+  void BuildAST(GQLParser::FilterLambdaFunctionContext* ctx,
+                ast::FilterLambdaFunction& value) {
+    AssignInputPosition(ctx, value);
+    BuildAST(ctx->listValueExpression()->valueExpression(), *value.list);
+    BuildAST(ctx->lambdaExpression(), value.lambda);
+  }
+
+  void BuildAST(GQLParser::ReduceLambdaFunctionContext* ctx,
+                ast::ReduceLambdaFunction& value) {
+    AssignInputPosition(ctx, value);
+    BuildAST(ctx->listValueExpression()->valueExpression(), *value.list);
+    BuildAST(ctx->lambdaExpression(), value.lambda);
+    if (auto* ctx2 = ctx->valueExpression()) {
+      BuildAST(ctx2, *value.initialValue.emplace());
+    }
+  }
+
   void BuildAST(GQLParser::ElementsFunctionContext* ctx,
                 ast::ValueExpression::Unary& value) {
     value.op = ast::ValueExpression::Unary::Op::Elements;
@@ -1980,9 +2020,26 @@ struct ASTBuilder {
     } else if (auto ctx2 = ctx->listValueFunction()) {
       if (auto ctx3 = ctx2->trimListFunction()) {
         BuildAST(ctx3, value.option.emplace<ast::ValueExpression::Binary>());
+      } else if (auto ctx3 = ctx2->elementsFunction()) {
+        BuildAST(ctx3, value.option.emplace<ast::ValueExpression::Unary>());
+      } else if (auto ctx3 = ctx2->listContainsFunction()) {
+        BuildAST(ctx3, value.option.emplace<ast::ValueFunction>()
+                           .emplace<ast::ListContainsFunction>());
+      } else if (auto ctx3 = ctx2->lambdaFunction()) {
+        if (auto ctx4 = ctx3->transformLambdaFunction()) {
+          BuildAST(ctx4, value.option.emplace<ast::ValueFunction>()
+                             .emplace<ast::TransformLambdaFunction>());
+        } else if (auto ctx4 = ctx3->filterLambdaFunction()) {
+          BuildAST(ctx4, value.option.emplace<ast::ValueFunction>()
+                             .emplace<ast::FilterLambdaFunction>());
+        } else if (auto ctx4 = ctx3->reduceLambdaFunction()) {
+          BuildAST(ctx4, value.option.emplace<ast::ValueFunction>()
+                             .emplace<ast::ReduceLambdaFunction>());
+        } else {
+          GQL_ASSERT(false);
+        }
       } else {
-        BuildAST(ctx2->elementsFunction(),
-                 value.option.emplace<ast::ValueExpression::Unary>());
+        GQL_ASSERT(false);
       }
     } else {
       GQL_ASSERT(false);
@@ -2443,15 +2500,13 @@ struct ASTBuilder {
         }
       } else if (auto ctx3 = ctx2->shortestPathSearch()) {
         if (auto ctx4 = ctx3->allShortestPathSearch()) {
-          pathSearch.search =
-              ast::PathSearchPrefix::Search::AllShortestPath;
+          pathSearch.search = ast::PathSearchPrefix::Search::AllShortestPath;
           pathSearch.number = 1u;
           if (auto ctx5 = ctx4->pathMode()) {
             BuildAST(ctx5, value.mode);
           }
         } else if (auto ctx4 = ctx3->anyShortestPathSearch()) {
-          pathSearch.search =
-              ast::PathSearchPrefix::Search::AnyShortestPath;
+          pathSearch.search = ast::PathSearchPrefix::Search::AnyShortestPath;
           pathSearch.number = 1u;
           if (auto ctx5 = ctx4->pathMode()) {
             BuildAST(ctx5, value.mode);
