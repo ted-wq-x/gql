@@ -27,6 +27,14 @@
 
 namespace gql {
 
+static ast::ValueType GetListElementType(const ast::ValueType& listType) {
+  if (auto* listValueType =
+          std::get_if<ast::ValueType::List>(&listType.typeOption)) {
+    return *listValueType->valueType;
+  }
+  return MakeValueType(ast::SimplePredefinedType::Any);
+}
+
 ast::ValueType SyntaxAnalyzer::ProcessValueExpression(
     ast::ValueExpression& expr,
     const ExecutionContext& inContext,
@@ -631,26 +639,91 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ListContainsFunction& expr,
 
 ast::ValueType SyntaxAnalyzer::Process(ast::TransformLambdaFunction& expr,
                                        const ExecutionContext& context) {
-  ProcessListValueExpression(*expr.list, context);
-  ProcessValueExpression(*expr.lambda.expr, context);
-  return MakeValueType(ast::ValueType::List{});
+  auto listType = ProcessListValueExpression(*expr.list, context);
+  auto elementType = GetListElementType(listType);
+  auto childContext = context.MakeCopy();
+  for (const auto& param : expr.lambda.parameters) {
+    if (auto* existingField =
+            HasField(childContext.workingRecord, param.name)) {
+      existingField->type = elementType;
+    } else {
+      auto& newField = childContext.workingRecord.emplace_back();
+      newField.name.name = param.name;
+      newField.type = elementType;
+    }
+  }
+  auto lambdaResultType =
+      ProcessValueExpression(*expr.lambda.expr, childContext);
+  ast::ValueType::List resultListType;
+  resultListType.valueType = lambdaResultType;
+  return MakeValueType(resultListType, listType.notNull);
 }
 
 ast::ValueType SyntaxAnalyzer::Process(ast::FilterLambdaFunction& expr,
                                        const ExecutionContext& context) {
-  ProcessListValueExpression(*expr.list, context);
-  ProcessBooleanValueExpression(*expr.lambda.expr, context);
-  return MakeValueType(ast::ValueType::List{});
+  auto listType = ProcessListValueExpression(*expr.list, context);
+  auto elementType = GetListElementType(listType);
+  auto childContext = context.MakeCopy();
+  for (const auto& param : expr.lambda.parameters) {
+    if (auto* existingField =
+            HasField(childContext.workingRecord, param.name)) {
+      existingField->type = elementType;
+    } else {
+      auto& newField = childContext.workingRecord.emplace_back();
+      newField.name.name = param.name;
+      newField.type = elementType;
+    }
+  }
+  ProcessBooleanValueExpression(*expr.lambda.expr, childContext);
+  return listType;
 }
 
 ast::ValueType SyntaxAnalyzer::Process(ast::ReduceLambdaFunction& expr,
                                        const ExecutionContext& context) {
-  ProcessListValueExpression(*expr.list, context);
-  ProcessValueExpression(*expr.lambda.expr, context);
+  auto listType = ProcessListValueExpression(*expr.list, context);
+  auto elementType = GetListElementType(listType);
+  auto childContext = context.MakeCopy();
+
+  auto accumulatorType = elementType;
   if (expr.initialValue) {
-    return ProcessValueExpression(**expr.initialValue, context);
+    accumulatorType = ProcessValueExpression(**expr.initialValue, context);
   }
-  return MakeValueType(ast::SimplePredefinedType::Any);
+
+  if (!expr.lambda.parameters.empty()) {
+    auto& param = expr.lambda.parameters[0];
+    if (auto* existingField =
+            HasField(childContext.workingRecord, param.name)) {
+      existingField->type = accumulatorType;
+    } else {
+      auto& newField = childContext.workingRecord.emplace_back();
+      newField.name.name = param.name;
+      newField.type = accumulatorType;
+    }
+  }
+  if (expr.lambda.parameters.size() >= 2) {
+    auto& param = expr.lambda.parameters[1];
+    if (auto* existingField =
+            HasField(childContext.workingRecord, param.name)) {
+      existingField->type = elementType;
+    } else {
+      auto& newField = childContext.workingRecord.emplace_back();
+      newField.name.name = param.name;
+      newField.type = elementType;
+    }
+  }
+  for (size_t i = 2; i < expr.lambda.parameters.size(); ++i) {
+    auto& param = expr.lambda.parameters[i];
+    auto anyType = MakeValueType(ast::SimplePredefinedType::Any);
+    if (auto* existingField =
+            HasField(childContext.workingRecord, param.name)) {
+      existingField->type = anyType;
+    } else {
+      auto& newField = childContext.workingRecord.emplace_back();
+      newField.name.name = param.name;
+      newField.type = anyType;
+    }
+  }
+  return ProcessValueExpression(*expr.lambda.expr, childContext);
 }
 
 ast::ValueType SyntaxAnalyzer::ProcessAggregateFunctionOperand(
