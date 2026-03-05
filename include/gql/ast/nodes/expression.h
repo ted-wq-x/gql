@@ -1124,9 +1124,6 @@ struct ValueExpression : NodeBase<ValueExpression> {
       GeneralLogarithm,
       Modulus,
       TrimList,
-      ReduceLambda,
-      FilterLambda,
-      transformLambda,
     };
 
     Op op = Op::Multiply;
