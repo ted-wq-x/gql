@@ -96,6 +96,9 @@ Value Demo::Evaluate(const gql::ast::ValueExpression& expr,
       [&](const gql::ast::ElementIdFunction& value) {
         return Evaluate(value, context);
       },
+      [&](const gql::ast::ToTimestampFunction& value) {
+        return Evaluate(value, context);
+      },
       [&](const gql::ast::LetValueExpression& value) {
         return Evaluate(value, context);
       },
@@ -613,6 +616,13 @@ Value Demo::Evaluate(const gql::ast::ElementIdFunction& expr,
       [&](Null) { return Value{Null{}}; },
       [&](const NodeReference& value) { return Value{value.nodeId}; },
       [&](const EdgeReference& value) { return Value{value.edgeId}; });
+}
+
+Value Demo::Evaluate(const gql::ast::ToTimestampFunction& expr,
+                     const ExecutionContext& context) {
+  Evaluate(*expr.expr, context);
+  // TODO: Implement TO_TIMESTAMP evaluation.
+  return Value{Null{}};
 }
 
 Value Demo::Evaluate(const gql::ast::AggregateFunction& expr,

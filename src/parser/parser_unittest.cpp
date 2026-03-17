@@ -390,4 +390,16 @@ TEST(ParseAndPrintNode, NumericValueExpression3) {
   EXPECT_EQ(ast::PrintTree(value), "1 * (2 + 3) * 4");
 }
 
+TEST(ParseAndPrintNode, ToTimestampFunction) {
+  ParserWrapper p(R"(TO_TIMESTAMP("2024-01-01T00:00:00Z"))");
+
+  ast::ValueExpression value;
+  parser::BuildASTForTesting(p.parser.valueExpression(), value);
+
+  EXPECT_EQ(p.parser.getNumberOfSyntaxErrors(), 0);
+  auto* function = std::get_if<ast::ToTimestampFunction>(&value.option);
+  ASSERT_TRUE(function);
+  EXPECT_EQ(ast::PrintTree(value), R"(TO_TIMESTAMP("2024-01-01T00:00:00Z"))");
+}
+
 }  // namespace gql

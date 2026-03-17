@@ -1513,6 +1513,13 @@ struct ASTBuilder {
     BuildAST(ctx->elementVariableReference(), value.variable);
   }
 
+  void BuildAST(GQLParser::ToTimeStampFunctionContext* ctx,
+                ast::ToTimestampFunction& value) {
+    AssignInputPosition(ctx, value);
+    BuildAST(ctx->valueExpression(), *value.expr);
+    value.expr->isValueExpressionRule = true;
+  }
+
   void BuildAST(GQLParser::LetVariableDefinitionContext* ctx,
                 ast::LetVariableDefinition& value) {
     AssignInputPosition(ctx, value);
@@ -3978,6 +3985,9 @@ void ASTBuilder::BuildAST(GQLParser::ValueExpressionPrimaryContext* ctx,
   } else if (auto ctx2 = ctx->bindingVariableReference()) {
     BuildAST(ctx2->bindingVariable(),
              value.option.emplace<ast::BindingVariableReference>());
+  } else if (auto ctx2 = ctx->extentedFunction()) {
+    BuildAST(ctx2->toTimeStampFunction(),
+             value.option.emplace<ast::ToTimestampFunction>());
   } else {
     ProcessNonParenthesizedValueExpressionPrimarySpecialCase(ctx, value);
   }

@@ -517,6 +517,12 @@ struct ElementIdFunction : NodeBase<ElementIdFunction> {
 };
 GQL_AST_STRUCT(ElementIdFunction, variable)
 
+// toTimeStampFunction : TO_TIMESTAMP LEFT_PAREN valueExpression RIGHT_PAREN ;
+struct ToTimestampFunction : NodeBase<ToTimestampFunction> {
+  ValueExpressionPtr expr;
+};
+GQL_AST_STRUCT(ToTimestampFunction, expr)
+
 // listValueConstructor : listValueConstructorByEnumeration ;
 using ListValueConstructor = ListValueConstructorByEnumeration;
 
@@ -812,6 +818,7 @@ using ValueFunction = std::variant<DatetimeSubtraction,
 //     | castSpecification
 //     | element_idFunction
 //     | letValueExpression
+//     | extentedFunction
 //     ;
 
 // nonParenthesizedValueExpressionPrimary
@@ -1158,6 +1165,7 @@ struct ValueExpression : NodeBase<ValueExpression> {
                CaseExpression,
                CastSpecification,
                ElementIdFunction,
+               ToTimestampFunction,
                LetValueExpression,
                Predicate>
       option;

@@ -28,6 +28,7 @@ struct ValueExpressionRequiresParens {
   bool operator()(const CaseExpression&) { return false; }
   bool operator()(const CastSpecification&) { return false; }
   bool operator()(const ElementIdFunction&) { return false; }
+  bool operator()(const ToTimestampFunction&) { return false; }
   bool operator()(const LetValueExpression&) { return false; }
 
   // <unsigned value specification>

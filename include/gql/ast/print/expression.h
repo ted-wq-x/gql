@@ -412,6 +412,14 @@ struct Printer<ElementIdFunction> {
 };
 
 template <>
+struct Printer<ToTimestampFunction> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const ToTimestampFunction& v) {
+    os << "TO_TIMESTAMP(" << v.expr << ")";
+  }
+};
+
+template <>
 struct Printer<DateTimeFunction> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const DateTimeFunction& v) {

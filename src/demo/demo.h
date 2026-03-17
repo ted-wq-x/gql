@@ -95,6 +95,7 @@ class Demo {
   Value Evaluate(const gql::ast::AllElementsPredicate&,
                  const ExecutionContext&);
   Value Evaluate(const gql::ast::ElementIdFunction&, const ExecutionContext&);
+  Value Evaluate(const gql::ast::ToTimestampFunction&, const ExecutionContext&);
   Value Evaluate(const gql::ast::AggregateFunction&, const ExecutionContext&);
   Value Evaluate(const gql::ast::LetValueExpression&, const ExecutionContext&);
   Value EvaluateValueQueryExpression(const gql::ast::ProcedureBody&,

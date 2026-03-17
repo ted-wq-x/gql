@@ -1217,6 +1217,13 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ElementIdFunction& expr,
   return MakeValueTypeUInt64(type.notNull);
 }
 
+ast::ValueType SyntaxAnalyzer::Process(ast::ToTimestampFunction& expr,
+                                       const ExecutionContext& context) {
+  ProcessValueExpression(*expr.expr, context);
+  // TODO: Add precise typing rules for TO_TIMESTAMP.
+  return ast::ValueType{};
+}
+
 ast::ValueType SyntaxAnalyzer::Process(ast::LetValueExpression& expr,
                                        const ExecutionContext& context) {
   ThrowIfFeatureNotSupported(standard::Feature::GE03, expr);
