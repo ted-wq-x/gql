@@ -208,6 +208,7 @@ class SyntaxAnalyzer {
   ast::ValueType Process(ast::CastSpecification&, const ExecutionContext&);
   ast::ValueType Process(ast::ElementIdFunction&, const ExecutionContext&);
   ast::ValueType Process(ast::ToTimestampFunction&, const ExecutionContext&);
+  ast::ValueType Process(ast::ExtractFunction&, const ExecutionContext&);
   ast::ValueType Process(ast::LetValueExpression&, const ExecutionContext&);
 
   // Predicates

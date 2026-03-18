@@ -85,6 +85,9 @@ TEST(SyntaxAnalyzer, HeadAndLastFunctions) {
       .ExpectOmittedResult();
   GQL_TEST_PARSE("SESSION SET VALUE $P2 = LAST([1, 2, 3])")
       .ExpectOmittedResult();
+  GQL_TEST_PARSE(
+      "SESSION SET VALUE $P3 = EXTRACT(\"YEAR\" FROM DATE(\"2024-01-01\"))")
+      .ExpectOmittedResult();
 }
 
 TEST(SyntaxAnalyzer, GraphPatternGroupBy) {

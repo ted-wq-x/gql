@@ -420,6 +420,14 @@ struct Printer<ToTimestampFunction> {
 };
 
 template <>
+struct Printer<ExtractFunction> {
+  template <typename OutputStream>
+  static void Print(OutputStream& os, const ExtractFunction& v) {
+    os << "EXTRACT(" << v.field << "FROM" << v.expr << ")";
+  }
+};
+
+template <>
 struct Printer<DateTimeFunction> {
   template <typename OutputStream>
   static void Print(OutputStream& os, const DateTimeFunction& v) {

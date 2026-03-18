@@ -402,6 +402,20 @@ TEST(ParseAndPrintNode, ToTimestampFunction) {
   EXPECT_EQ(ast::PrintTree(value), R"(TO_TIMESTAMP("2024-01-01T00:00:00Z"))");
 }
 
+TEST(ParseAndPrintNode, ExtractFunction) {
+  ParserWrapper p(R"(EXTRACT("YEAR" FROM DATE("2024-01-01")))");
+
+  ast::ValueExpression value;
+  parser::BuildASTForTesting(p.parser.valueExpression(), value);
+
+  EXPECT_EQ(p.parser.getNumberOfSyntaxErrors(), 0);
+  auto* function = std::get_if<ast::ExtractFunction>(&value.option);
+  ASSERT_TRUE(function);
+  EXPECT_EQ(function->field.name, "YEAR");
+  EXPECT_EQ(ast::PrintTree(value),
+            R"(EXTRACT("YEAR" FROM DATE("2024-01-01")))");
+}
+
 TEST(ParseAndPrintNode, HeadFunction) {
   ParserWrapper p("HEAD([1, 2, 3])");
 

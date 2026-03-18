@@ -523,6 +523,15 @@ struct ToTimestampFunction : NodeBase<ToTimestampFunction> {
 };
 GQL_AST_STRUCT(ToTimestampFunction, expr)
 
+// extractFunction
+//     : EXTRACT LEFT_PAREN extract_arg FROM valueExpression RIGHT_PAREN
+//     ;
+struct ExtractFunction : NodeBase<ExtractFunction> {
+  CharacterStringLiteral field;
+  ValueExpressionPtr expr;
+};
+GQL_AST_STRUCT(ExtractFunction, field, expr)
+
 // listValueConstructor : listValueConstructorByEnumeration ;
 using ListValueConstructor = ListValueConstructorByEnumeration;
 
@@ -1168,6 +1177,7 @@ struct ValueExpression : NodeBase<ValueExpression> {
                CastSpecification,
                ElementIdFunction,
                ToTimestampFunction,
+               ExtractFunction,
                LetValueExpression,
                Predicate>
       option;

@@ -1231,6 +1231,16 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ToTimestampFunction& expr,
   return ast::ValueType{};
 }
 
+ast::ValueType SyntaxAnalyzer::Process(ast::ExtractFunction& expr,
+                                       const ExecutionContext& context) {
+  auto sourceType = ProcessValueExpression(*expr.expr, context);
+  // TODO: Validate field name and derive a more precise numeric type from the
+  // input temporal or duration value.
+  ast::ScaleNumericType numericType;
+  numericType.type = ast::ScaleNumericType::Type::Decimal;
+  return MakeValueType(numericType, sourceType.notNull);
+}
+
 ast::ValueType SyntaxAnalyzer::Process(ast::LetValueExpression& expr,
                                        const ExecutionContext& context) {
   ThrowIfFeatureNotSupported(standard::Feature::GE03, expr);

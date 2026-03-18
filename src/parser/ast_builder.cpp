@@ -1520,6 +1520,16 @@ struct ASTBuilder {
     value.expr->isValueExpressionRule = true;
   }
 
+  void BuildAST(GQLParser::ExtractFunctionContext* ctx,
+                ast::ExtractFunction& value) {
+    AssignInputPosition(ctx, value);
+    auto* arg = ctx->extract_list()->extract_arg();
+    AssignInputPosition(arg, value.field);
+    value.field.name = UnescapeQuotedCharacterSequence(arg->getText());
+    BuildAST(ctx->extract_list()->valueExpression(), *value.expr);
+    value.expr->isValueExpressionRule = true;
+  }
+
   void BuildAST(GQLParser::LetVariableDefinitionContext* ctx,
                 ast::LetVariableDefinition& value) {
     AssignInputPosition(ctx, value);
@@ -4000,6 +4010,8 @@ void ASTBuilder::BuildAST(GQLParser::ValueExpressionPrimaryContext* ctx,
   } else if (auto ctx2 = ctx->extentedFunction()) {
     if (auto* ctx3 = ctx2->toTimeStampFunction()) {
       BuildAST(ctx3, value.option.emplace<ast::ToTimestampFunction>());
+    } else if (auto* ctx3 = ctx2->extractFunction()) {
+      BuildAST(ctx3, value.option.emplace<ast::ExtractFunction>());
     } else if (auto* ctx3 = ctx2->headFunction()) {
       BuildAST(ctx3, value.option.emplace<ast::ValueExpression::Unary>());
     } else if (auto* ctx3 = ctx2->lastFunction()) {
