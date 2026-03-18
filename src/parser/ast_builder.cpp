@@ -1866,6 +1866,18 @@ struct ASTBuilder {
     BuildAST(ctx->pathValueExpression()->valueExpression(), *value.expr);
   }
 
+  void BuildAST(GQLParser::HeadFunctionContext* ctx,
+                ast::ValueExpression::Unary& value) {
+    value.op = ast::ValueExpression::Unary::Op::Head;
+    BuildAST(ctx->valueExpression(), *value.expr);
+  }
+
+  void BuildAST(GQLParser::LastFunctionContext* ctx,
+                ast::ValueExpression::Unary& value) {
+    value.op = ast::ValueExpression::Unary::Op::Last;
+    BuildAST(ctx->valueExpression(), *value.expr);
+  }
+
   void BuildAST(GQLParser::CardinalityExpressionContext* ctx,
                 ast::ValueExpression::Unary& value) {
     if (auto ctx2 = ctx->cardinalityExpressionArgument()) {
@@ -3986,8 +3998,15 @@ void ASTBuilder::BuildAST(GQLParser::ValueExpressionPrimaryContext* ctx,
     BuildAST(ctx2->bindingVariable(),
              value.option.emplace<ast::BindingVariableReference>());
   } else if (auto ctx2 = ctx->extentedFunction()) {
-    BuildAST(ctx2->toTimeStampFunction(),
-             value.option.emplace<ast::ToTimestampFunction>());
+    if (auto* ctx3 = ctx2->toTimeStampFunction()) {
+      BuildAST(ctx3, value.option.emplace<ast::ToTimestampFunction>());
+    } else if (auto* ctx3 = ctx2->headFunction()) {
+      BuildAST(ctx3, value.option.emplace<ast::ValueExpression::Unary>());
+    } else if (auto* ctx3 = ctx2->lastFunction()) {
+      BuildAST(ctx3, value.option.emplace<ast::ValueExpression::Unary>());
+    } else {
+      GQL_ASSERT(false);
+    }
   } else {
     ProcessNonParenthesizedValueExpressionPrimarySpecialCase(ctx, value);
   }

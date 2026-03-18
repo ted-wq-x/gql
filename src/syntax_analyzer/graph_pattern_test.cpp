@@ -69,13 +69,22 @@ TEST(SyntaxAnalyzer, GraphPattern) {
   GQL_TEST_PARSE("MATCH (a)-(subpath1 = ((b)-){0,3})")
       .ExpectErrorContaining("minimum node count");
   GQL_TEST_PARSE("MATCH ((a)-){0,3} RETURN NO BINDINGS")
-      .ExpectErrorContaining("Parse error extraneous input 'BINDINGS' expecting {<EOF>, 'SESSION'}");
+      .ExpectErrorContaining(
+          "Parse error extraneous input 'BINDINGS' expecting {<EOF>, "
+          "'SESSION'}");
   GQL_TEST_PARSE(
       "MATCH ((A)->((B)->(C) WHERE A.X = B.X + C.X)->(D)){2} RETURN *")
       .ExpectTableResult()
       .WithFields(
           {Field("A").NodeReferenceGroup(), Field("B").NodeReferenceGroup(),
            Field("C").NodeReferenceGroup(), Field("D").NodeReferenceGroup()});
+}
+
+TEST(SyntaxAnalyzer, HeadAndLastFunctions) {
+  GQL_TEST_PARSE("SESSION SET VALUE $P1 = HEAD([1, 2, 3])")
+      .ExpectOmittedResult();
+  GQL_TEST_PARSE("SESSION SET VALUE $P2 = LAST([1, 2, 3])")
+      .ExpectOmittedResult();
 }
 
 TEST(SyntaxAnalyzer, GraphPatternGroupBy) {

@@ -493,6 +493,13 @@ ast::ValueType SyntaxAnalyzer::Process(ast::ValueExpression::Unary& expr,
       listType.valueType = MakeValueType(elementType);
       return MakeValueType(listType, !IsNullableType(argType));
     }
+    case ast::ValueExpression::Unary::Op::Head:
+    case ast::ValueExpression::Unary::Op::Last: {
+      auto argType = ProcessListValueExpression(*expr.expr, context);
+      auto resultType = GetListElementType(argType);
+      resultType.notNull = false;
+      return resultType;
+    }
     default:
       assert(false);
       return {};

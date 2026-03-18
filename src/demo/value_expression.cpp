@@ -326,6 +326,20 @@ Value Demo::Evaluate(const gql::ast::ValueExpression::Unary& expr,
             }
             return Value{lst};
           });
+    case gql::ast::ValueExpression::Unary::Op::Head:
+    case gql::ast::ValueExpression::Unary::Op::Last:
+      return gql::ast::variant_switch(
+          operand.v,
+          [&](const auto&) -> Value { ThrowInvalidValueTypeError(*expr.expr); },
+          [&](Null) { return Value{Null{}}; },
+          [&](const List& value) {
+            if (value.empty()) {
+              return Value{Null{}};
+            }
+            return expr.op == gql::ast::ValueExpression::Unary::Op::Head
+                       ? Value{*value.front()}
+                       : Value{*value.back()};
+          });
     case gql::ast::ValueExpression::Unary::Op::ByteLength:
     case gql::ast::ValueExpression::Unary::Op::Sin:
     case gql::ast::ValueExpression::Unary::Op::Cos:

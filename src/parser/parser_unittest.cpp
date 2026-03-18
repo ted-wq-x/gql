@@ -402,4 +402,30 @@ TEST(ParseAndPrintNode, ToTimestampFunction) {
   EXPECT_EQ(ast::PrintTree(value), R"(TO_TIMESTAMP("2024-01-01T00:00:00Z"))");
 }
 
+TEST(ParseAndPrintNode, HeadFunction) {
+  ParserWrapper p("HEAD([1, 2, 3])");
+
+  ast::ValueExpression value;
+  parser::BuildASTForTesting(p.parser.valueExpression(), value);
+
+  EXPECT_EQ(p.parser.getNumberOfSyntaxErrors(), 0);
+  auto* function = std::get_if<ast::ValueExpression::Unary>(&value.option);
+  ASSERT_TRUE(function);
+  EXPECT_EQ(function->op, ast::ValueExpression::Unary::Op::Head);
+  EXPECT_EQ(ast::PrintTree(value), "HEAD(LIST [1, 2, 3])");
+}
+
+TEST(ParseAndPrintNode, LastFunction) {
+  ParserWrapper p("LAST([1, 2, 3])");
+
+  ast::ValueExpression value;
+  parser::BuildASTForTesting(p.parser.valueExpression(), value);
+
+  EXPECT_EQ(p.parser.getNumberOfSyntaxErrors(), 0);
+  auto* function = std::get_if<ast::ValueExpression::Unary>(&value.option);
+  ASSERT_TRUE(function);
+  EXPECT_EQ(function->op, ast::ValueExpression::Unary::Op::Last);
+  EXPECT_EQ(ast::PrintTree(value), "LAST(LIST [1, 2, 3])");
+}
+
 }  // namespace gql

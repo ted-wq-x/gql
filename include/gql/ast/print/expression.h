@@ -691,6 +691,12 @@ struct Printer<ast::ValueExpression::Unary> {
       case ast::ValueExpression::Unary::Op::Elements:
         os << "ELEMENTS(" << v.expr << ")";
         break;
+      case ast::ValueExpression::Unary::Op::Head:
+        os << "HEAD(" << v.expr << ")";
+        break;
+      case ast::ValueExpression::Unary::Op::Last:
+        os << "LAST(" << v.expr << ")";
+        break;
     }
   }
 };

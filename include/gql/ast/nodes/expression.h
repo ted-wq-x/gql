@@ -1112,6 +1112,8 @@ struct ValueExpression : NodeBase<ValueExpression> {
       Cardinality,
       Size,  // Same as Cardinality but applies only to lists.
       Elements,
+      Head,
+      Last,
     };
 
     Op op = Op::Positive;
