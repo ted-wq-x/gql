@@ -78,4 +78,14 @@ TEST(SyntaxAnalyzer, SelectRewrite) {
       "s.name")
       .ExpectTableResult()
       .WithFields({Field("cityName"), Field::Any()});
+
+  GQL_TEST_PARSE(
+      "MATCH (person:Person)-[:KNOWS]-(friend:Person) "
+      "RETURN DISTINCT friend "
+      "NEXT MATCH (friend)<-[membership:hasMember]-(forum:Forum) "
+      "RETURN forum, collect_list(friend) AS friends GROUP BY forum "
+      "NEXT RETURN forum.title AS forumName, friends "
+      "ORDER BY forum.forumid")
+      .ExpectTableResult()
+      .WithFields({Field("forumName"), Field("friends")});
 }

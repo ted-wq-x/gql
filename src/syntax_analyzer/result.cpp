@@ -39,7 +39,16 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
         Process(statement, context);
         if (statement.orderByAndPage &&
             !statement.orderByAndPage->orderBy.empty()) {
-          Process(*statement.orderByAndPage, context);
+          // Validate ORDER BY against a copy rewritten with the pre-RETURN
+          // context so sort keys may still reference input bindings such as
+          // `forum.forumid`. The rewritten copy carries those bindings through
+          // the RETURN list just for validation and optional AST rewriting,
+          // while the original statement keeps its visible output columns.
+          auto rewrittenOrderBy = RewriteOrderByClause(statement, origContext);
+          auto rewrittenContext = origContext.MakeCopy();
+          Process(rewrittenOrderBy, rewrittenContext);
+          Process(*rewrittenOrderBy.orderByAndPage, rewrittenContext);
+
           // Rewrite above made return item list non-optional.
           const ast::ReturnItemList& returnItemList = *statement.items;
           for (auto& sortItem : statement.orderByAndPage->orderBy) {
@@ -75,15 +84,6 @@ SyntaxAnalyzer::OptBindingTableType SyntaxAnalyzer::Process(
             }
             // TODO: Check GA07 feature
           }
-
-          // Call rewrite independently from the |rewriteResultOrderByClause|
-          // option value to perform checks inside the function, but drop
-          // rewrite result if option is disabled.
-          auto rewrittenOrderBy = RewriteOrderByClause(statement, context);
-          // Processing rewritten statement shouldn't be necessary, but we do it
-          // anyway to check for errors in the code.
-          Process(rewrittenOrderBy, origContext);
-          Process(*rewrittenOrderBy.orderByAndPage, origContext);
           if (config_.rewriteResultOrderByClause) {
             statement = std::move(rewrittenOrderBy);
           }
