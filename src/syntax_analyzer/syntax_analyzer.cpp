@@ -178,12 +178,14 @@ struct IsCastableVisitor {
 
 bool SyntaxAnalyzer::IsCastableTo(ast::ValueType src,
                                   const ast::ValueType& dest) const {
-  ast::ValueType::Union propertyUnionType;
-  for (auto& t : config_.supportedPropertyTypes) {
-    propertyUnionType.types.emplace_back() = t;
-  }
-
-  return IsCastableVisitor{propertyUnionType}.Visit(src, dest);
+  // ast::ValueType::Union propertyUnionType;
+  // for (auto& t : config_.supportedPropertyTypes) {
+  //   propertyUnionType.types.emplace_back() = t;
+  // }
+  //
+  // return IsCastableVisitor{propertyUnionType}.Visit(src, dest);
+  // todo 不校验，让 duckdb 校验
+  return true;
 }
 
 SyntaxAnalyzer::ExecutionContext SyntaxAnalyzer::ExecutionContext::MakeChild()
