@@ -23,6 +23,18 @@
 
 namespace gql {
 
+static SyntaxAnalyzer::BindingTableType BuildNamedProcedureWorkingTable(
+    const ast::NamedProcedureCall& statement) {
+  SyntaxAnalyzer::BindingTableType result;
+  result.reserve(statement.yield.size());
+  for (const auto& item : statement.yield) {
+    auto& field = result.emplace_back();
+    field.name.name = item.name.name;
+    field.type = MakeValueType(ast::SimplePredefinedType::Any, false);
+  }
+  return result;
+}
+
 static void CheckLinearQueryStatements(const ast::StatementBlock& statements) {
   int linearQueryStatementCount = 0;
   int selectStatementCount = 0;
@@ -368,9 +380,15 @@ void SyntaxAnalyzer::Process(ast::CallProcedureStatement& callProc,
       },
       [&](const ast::NamedProcedureCall& statement) {
         ThrowIfFeatureNotSupported(standard::Feature::GP04, statement);
+        if (statement.yield.empty()) {
+          return;
+        }
 
-        throw FormattedError(statement, ErrorCode::E0100,
-                             "No named procedures defined");
+        // Named procedures do not have catalog-backed result schema yet, so we
+        // seed the yielded field names with permissive placeholder types and
+        // let later clauses bind against those visible output columns.
+        childContext.workingTable = BuildNamedProcedureWorkingTable(statement);
+        procResultType = Process(statement.yield, childContext);
       });
 
   if (procResultType) {

@@ -120,6 +120,23 @@ SESSION SET VALUE $P3 = REDUCE([1, 2, 3], LAMBDA acc, x : acc + x, 0)
       gql::ast::FindFirstNodeOfType<gql::ast::ReduceLambdaFunction>(program));
 }
 
+TEST(ParserTest, ParseNamedProcedureCall) {
+  const char query[] = "CALL foo(1, 2) YIELD x AS y RETURN y";
+
+  gql::ast::GQLProgram program = gql::parser::ParseProgram(query);
+
+  auto* call = gql::ast::FindFirstNodeOfType<gql::ast::NamedProcedureCall>(program);
+  ASSERT_TRUE(call);
+  auto* proc = std::get_if<gql::ast::CatalogProcedureParentAndName>(&call->proc);
+  ASSERT_TRUE(proc);
+  EXPECT_EQ(proc->name.name, "foo");
+  ASSERT_EQ(call->args.size(), 2);
+  ASSERT_EQ(call->yield.size(), 1);
+  EXPECT_EQ(call->yield[0].name.name, "x");
+  ASSERT_TRUE(call->yield[0].alias.has_value());
+  EXPECT_EQ(call->yield[0].alias->name, "y");
+}
+
 TEST(ASTTest, StaticCheck) {
   gql::ast::GQLProgram value;
   gql::ast::GQLProgram value2 = value;

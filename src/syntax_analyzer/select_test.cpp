@@ -89,3 +89,22 @@ TEST(SyntaxAnalyzer, SelectRewrite) {
       .ExpectTableResult()
       .WithFields({Field("forumName"), Field("friends")});
 }
+
+TEST(SyntaxAnalyzer, NamedProcedureCallCurrentSupport) {
+  GQL_TEST_PARSE("CALL foo()").ExpectOmittedResult();
+  GQL_TEST_PARSE("CALL foo(1) YIELD x RETURN x")
+      .ExpectTableResult()
+      .WithFields({Field("x")});
+  GQL_TEST_PARSE("CALL foo(1) YIELD x AS y RETURN y")
+      .ExpectTableResult()
+      .WithFields({Field("y")});
+  GQL_TEST_PARSE("MATCH (n) CALL foo() RETURN n")
+      .ExpectTableResult()
+      .WithFields({Field("n").NodeReference().Unconditional()});
+  GQL_TEST_PARSE("MATCH (n) CALL foo(1) YIELD x RETURN n, x")
+      .ExpectTableResult()
+      .WithFields({Field("n").NodeReference().Unconditional(), Field("x")});
+  GQL_TEST_PARSE("MATCH (n) OPTIONAL CALL foo(1) YIELD x RETURN n, x")
+      .ExpectTableResult()
+      .WithFields({Field("n").NodeReference().Unconditional(), Field("x")});
+}
