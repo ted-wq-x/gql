@@ -2,3 +2,4 @@
 /src/fuzzer/out
 .venv
 /src/parser/generated/
+/third_party/fmt/support/.gradle
